@@ -84,12 +84,10 @@ func GenerateSelfSignedCertificate(
 		NotBefore: now.Add(-5 * time.Minute),
 		NotAfter:  now.AddDate(0, 0, request.ValidityDays),
 
-		KeyUsage: x509.KeyUsageDigitalSignature |
-			x509.KeyUsageKeyEncipherment,
+		KeyUsage: x509.KeyUsageDigitalSignature,
 
-		ExtKeyUsage: []x509.ExtKeyUsage{
-			x509.ExtKeyUsageClientAuth,
-		},
+		// No ExtKeyUsage — IBM Verify signer certs must not be restricted to clientAuth.
+		// Removing ExtKeyUsage allows IBM Verify to accept the cert for signature verification.
 
 		BasicConstraintsValid: true,
 		IsCA:                  false,
