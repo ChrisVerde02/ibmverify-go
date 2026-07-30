@@ -3,7 +3,6 @@ package client
 import (
 	"bytes"
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -16,7 +15,7 @@ import (
 type SignerCertRequest struct {
 	TenantURL   string
 	AccessToken string
-	// CertificatePEM is the raw PEM string. It is base64-encoded before sending.
+	// CertificatePEM is the raw PEM string sent directly to IBM Verify.
 	CertificatePEM string
 	// Label is the friendly name / alias for the certificate in IBM Verify.
 	// This must match the kid header used in the JWT (key_id in the provider).
@@ -33,7 +32,7 @@ type SignerCertResponse struct {
 
 // importSignerCertBody is the JSON body sent to POST /v1.0/signercert.
 type importSignerCertBody struct {
-	// Cert is the base64-encoded PEM bytes of the certificate.
+	// Cert is the raw PEM string of the certificate.
 	Cert  string `json:"cert"`
 	Label string `json:"label"`
 }
@@ -63,11 +62,9 @@ func ImportSignerCert(
 
 	endpoint := strings.TrimRight(request.TenantURL, "/") + "/v1.0/signercert"
 
-	// IBM Verify expects the raw PEM bytes base64-encoded, not the PEM string itself.
-	certBase64 := base64.StdEncoding.EncodeToString([]byte(request.CertificatePEM))
-
 	body := importSignerCertBody{
-		Cert:  certBase64,
+		// IBM Verify expects the raw PEM string in the cert field.
+		Cert: request.CertificatePEM,
 		Label: request.Label,
 	}
 
