@@ -1,5 +1,5 @@
 module github.com/ChrisVerde02/ibmverify-go
 
-go 1.26.4
+go 1.23
 
 require github.com/golang-jwt/jwt/v5 v5.3.1
