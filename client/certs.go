@@ -3,7 +3,9 @@ package client
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"io"
 	"net/http"
@@ -25,6 +27,27 @@ type CertResult struct {
 	Cert    string `json:"cert"`
 	Subject string `json:"subjectDN"`
 	Issuer  string `json:"issuerDN"`
+}
+
+
+// normaliseCertPEM converts an IBM Verify cert field to a PEM string.
+// IBM Verify returns the cert as raw base64-encoded DER. If the value is
+// already a valid PEM block it is returned unchanged.
+func normaliseCertPEM(raw string) string {
+	raw = strings.TrimSpace(raw)
+	if strings.HasPrefix(raw, "-----") {
+		// Already PEM — return as-is.
+		return raw
+	}
+	// Strip any whitespace/newlines that may be embedded in the base64.
+	raw = strings.ReplaceAll(raw, "\n", "")
+	raw = strings.ReplaceAll(raw, " ", "")
+	der, err := base64.StdEncoding.DecodeString(raw)
+	if err != nil {
+		// Not valid base64 — return unchanged and let callers handle it.
+		return raw
+	}
+	return string(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der}))
 }
 
 // Import uploads a PEM certificate to IBM Verify as a signer certificate.
@@ -115,6 +138,7 @@ func (cr *CertsClient) Get(ctx context.Context, label string) (*CertResult, erro
 	if err := json.Unmarshal(body, &result); err != nil {
 		return nil, fmt.Errorf("get cert: decode response: %w", err)
 	}
+	result.Cert = normaliseCertPEM(result.Cert)
 	return &result, nil
 }
 
@@ -231,6 +255,7 @@ func (cr *CertsClient) GetWithToken(ctx context.Context, label, accessToken stri
 	if err := json.Unmarshal(body, &result); err != nil {
 		return nil, fmt.Errorf("get cert: decode response: %w", err)
 	}
+	result.Cert = normaliseCertPEM(result.Cert)
 	return &result, nil
 }
 
