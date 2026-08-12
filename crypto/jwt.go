@@ -1,6 +1,7 @@
 package crypto
 
 import (
+	"crypto/rand"
 	"errors"
 	"fmt"
 	"time"
@@ -25,35 +26,41 @@ type JWTResult struct {
 	ExpiresAt int64
 }
 
+// GenerateJTI generates a random UUID-shaped string for use as a jti claim.
+// Returns an error instead of panicking if the system random source fails.
+func GenerateJTI() (string, error) {
+	b := make([]byte, 16)
+	if _, err := rand.Read(b); err != nil {
+		return "", fmt.Errorf("generate JTI: read random bytes: %w", err)
+	}
+	return fmt.Sprintf(
+		"%08x-%04x-%04x-%04x-%12x",
+		b[0:4], b[4:6], b[6:8], b[8:10], b[10:],
+	), nil
+}
+
 // GenerateSignedJWT creates an RS256-signed JWT.
 func GenerateSignedJWT(request JWTRequest) (*JWTResult, error) {
 	if request.Issuer == "" {
 		return nil, errors.New("issuer cannot be empty")
 	}
-
 	if request.Subject == "" {
 		return nil, errors.New("subject cannot be empty")
 	}
-
 	if request.KeyID == "" {
 		return nil, errors.New("key ID cannot be empty")
 	}
-
 	if request.JWTID == "" {
 		return nil, errors.New("JWT ID cannot be empty")
 	}
-
 	if request.PrivateKeyPEM == "" {
 		return nil, errors.New("private key cannot be empty")
 	}
-
 	if request.ExpiresIn <= 0 {
 		return nil, errors.New("expiration duration must be greater than zero")
 	}
 
-	privateKey, err := jwt.ParseRSAPrivateKeyFromPEM(
-		[]byte(request.PrivateKeyPEM),
-	)
+	privateKey, err := jwt.ParseRSAPrivateKeyFromPEM([]byte(request.PrivateKeyPEM))
 	if err != nil {
 		return nil, fmt.Errorf("parse RSA private key: %w", err)
 	}
@@ -70,7 +77,6 @@ func GenerateSignedJWT(request JWTRequest) (*JWTResult, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-
 	token.Header["kid"] = request.KeyID
 
 	signedToken, err := token.SignedString(privateKey)

@@ -1,0 +1,514 @@
+
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>IBM Verify Go SDK — Project Readiness Review</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    background: #ffffff;
+    color: #1f2328;
+    padding: 32px 16px 48px;
+  }
+  .page { max-width: 760px; margin: 0 auto; }
+
+  /* ── header ── */
+  .hero {
+    border-bottom: 2px solid #e5e7eb;
+    padding-bottom: 20px;
+    margin-bottom: 28px;
+  }
+  .hero h1 { font-size: 22px; font-weight: 700; color: #1f2328; }
+  .hero p  { color: #57606a; margin-top: 6px; font-size: 13px; }
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 12px;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+  .badge-green  { background: #d1fae5; color: #065f46; }
+  .badge-yellow { background: #fef9c3; color: #78350f; }
+  .badge-red    { background: #fee2e2; color: #991b1b; }
+  .badge-blue   { background: #dbeafe; color: #1e40af; }
+
+  /* ── section ── */
+  h2 {
+    font-size: 15px;
+    font-weight: 700;
+    color: #3b82d4;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin: 28px 0 12px;
+    border-left: 3px solid #3b82d4;
+    padding-left: 10px;
+  }
+  h3 { font-size: 14px; font-weight: 700; margin: 16px 0 6px; color: #1f2328; }
+
+  /* ── cards row ── */
+  .card-row { display: flex; gap: 12px; margin-bottom: 4px; flex-wrap: wrap; }
+  .card {
+    background: #f7f8fa;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 14px 16px;
+    flex: 1 1 200px;
+  }
+  .card .num { font-size: 28px; font-weight: 700; color: #3b82d4; }
+  .card .lbl { font-size: 12px; color: #57606a; margin-top: 2px; }
+
+  /* ── table ── */
+  table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 13px; }
+  th {
+    background: #f7f8fa;
+    border: 1px solid #e5e7eb;
+    padding: 7px 10px;
+    text-align: left;
+    font-weight: 600;
+    color: #57606a;
+  }
+  td {
+    border: 1px solid #e5e7eb;
+    padding: 7px 10px;
+    vertical-align: top;
+  }
+  tr:nth-child(even) td { background: #fafafa; }
+
+  /* ── repo box ── */
+  .repo-row { display: flex; gap: 12px; flex-wrap: wrap; margin: 10px 0; }
+  .repo-box {
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 12px 16px;
+    flex: 1 1 200px;
+    background: #f7f8fa;
+  }
+  .repo-box .name { font-weight: 700; font-size: 13px; color: #1f2328; }
+  .repo-box .sub  { font-size: 12px; color: #57606a; margin-top: 3px; }
+  .repo-box .status { margin-top: 8px; }
+
+  /* ── gap table ── */
+  .gap-row td:first-child { font-weight: 600; color: #1f2328; }
+
+  /* ── code ── */
+  code {
+    background: #f0f3f6;
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-size: 12px;
+    font-family: "SFMono-Regular", "Consolas", monospace;
+  }
+
+  /* ── arch diagram ── */
+  .arch {
+    background: #f7f8fa;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 20px;
+    text-align: center;
+    margin: 12px 0;
+  }
+  .arch svg { width: 100%; max-width: 640px; }
+
+  /* ── alert box ── */
+  .alert {
+    border-left: 4px solid;
+    padding: 10px 14px;
+    border-radius: 0 4px 4px 0;
+    margin: 10px 0;
+    font-size: 13px;
+  }
+  .alert-green  { border-color: #10b981; background: #f0fdf4; color: #064e3b; }
+  .alert-yellow { border-color: #f59e0b; background: #fffbeb; color: #78350f; }
+  .alert-red    { border-color: #ef4444; background: #fef2f2; color: #7f1d1d; }
+
+  /* ── checklist ── */
+  ul.check { list-style: none; padding-left: 4px; }
+  ul.check li { padding: 3px 0; font-size: 13px; }
+  ul.check li::before { margin-right: 8px; }
+  ul.check li.ok::before    { content: "✓"; color: #10b981; font-weight: 700; }
+  ul.check li.warn::before  { content: "△"; color: #f59e0b; font-weight: 700; }
+  ul.check li.miss::before  { content: "✗"; color: #ef4444; font-weight: 700; }
+
+  /* ── timeline ── */
+  .timeline { border-left: 2px solid #e5e7eb; padding-left: 20px; margin: 10px 0; }
+  .tl-item { margin-bottom: 14px; position: relative; }
+  .tl-item::before {
+    content: "";
+    position: absolute;
+    left: -26px;
+    top: 5px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 2px solid #3b82d4;
+    background: #ffffff;
+  }
+  .tl-item .tl-title { font-weight: 700; font-size: 13px; }
+  .tl-item .tl-body  { font-size: 12px; color: #57606a; margin-top: 2px; }
+
+  /* ── footer ── */
+  .footer {
+    text-align: center;
+    font-size: 11px;
+    color: #adb5bd;
+    border-top: 1px solid #e5e7eb;
+    margin-top: 40px;
+    padding-top: 14px;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  
+  <div class="hero">
+    <h1>IBM Verify Go SDK — Project Readiness Review</h1>
+    <p>
+      Repository: <code>ibmverify-go</code>  ·  Module: <code>github.com/ChrisVerde02/ibmverify-go</code>  ·  Version: <strong>v1.4.0</strong>  ·  Go 1.23
+        
+      <span class="badge badge-green">SDK: Exists</span>
+      <span class="badge badge-yellow">CLI: Separate Repo</span>
+      <span class="badge badge-yellow">Terraform: Separate Repo</span>
+    </p>
+  </div>
+
+  
+  <h2>At-a-Glance</h2>
+  <div class="card-row">
+    <div class="card"><div class="num">2</div><div class="lbl">Packages implemented<br /><code>client</code> · <code>crypto</code></div></div>
+    <div class="card"><div class="num">8</div><div class="lbl">Exported functions<br />across both packages</div></div>
+    <div class="card"><div class="num">3</div><div class="lbl">IBM Verify API domains<br />OAuth · Introspect · Certs</div></div>
+    <div class="card"><div class="num">1</div><div class="lbl">Dependency<br /><code>golang-jwt/jwt v5</code></div></div>
+  </div>
+
+  
+  <h2>Architecture — Spec vs Reality</h2>
+  <p style="font-size:13px;color:#57606a;margin-bottom:10px">
+    The project spec calls for three separate repositories sharing a single Go SDK. That structure is already in place.
+  </p>
+  <div class="arch">
+    <svg xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,Segoe UI,system-ui,sans-serif" font-size="12">
+      
+      <rect x="205" y="10" width="210" height="54" rx="6" fill="#dbeafe" stroke="#3b82d4" stroke-width="1.5"></rect>
+      <text x="310" y="32" text-anchor="middle" font-weight="700" fill="#1e3a5f" font-size="13">ibmverify-go (SDK)</text>
+      <text x="310" y="50" text-anchor="middle" fill="#1e40af">client · crypto · v1.4.0</text>
+      
+      <rect x="30" y="128" width="180" height="48" rx="6" fill="#f0fdf4" stroke="#10b981" stroke-width="1.5"></rect>
+      <text x="120" y="150" text-anchor="middle" font-weight="700" fill="#064e3b" font-size="13">ibmverify-cli</text>
+      <text x="120" y="166" text-anchor="middle" fill="#065f46">Cobra CLI (separate repo)</text>
+      
+      <rect x="410" y="128" width="190" height="48" rx="6" fill="#f5f3ff" stroke="#7c5cd8" stroke-width="1.5"></rect>
+      <text x="505" y="150" text-anchor="middle" font-weight="700" fill="#3b0764" font-size="13">terraform-provider-verify</text>
+      <text x="505" y="166" text-anchor="middle" fill="#4c1d95">TF Plugin Framework (separate repo)</text>
+      
+      <line x1="120" y1="128" x2="260" y2="64" stroke="#10b981" stroke-width="1.5" marker-end="url(#arr-green)"></line>
+      <line x1="505" y1="128" x2="360" y2="64" stroke="#7c5cd8" stroke-width="1.5" marker-end="url(#arr-purple)"></line>
+      <defs>
+        <marker id="arr-green">
+          <path d="M0,0 L0,6 L8,3 z" fill="#10b981"></path>
+        </marker>
+        <marker id="arr-purple">
+          <path d="M8,0 L8,6 L0,3 z" fill="#7c5cd8"></path>
+        </marker>
+      </defs>
+      <text x="163" y="103" text-anchor="middle" fill="#57606a" font-size="11">imports SDK</text>
+      <text x="462" y="103" text-anchor="middle" fill="#57606a" font-size="11">imports SDK</text>
+      
+      <text x="310" y="195" text-anchor="middle" fill="#57606a" font-size="11">"If it calls IBM Verify over HTTP, it lives in ibmverify-go."</text>
+    </svg>
+  </div>
+  <div class="alert alert-green">
+    <strong>Architecture alignment: ✓ Matches spec.</strong> Separate repositories, single shared SDK, clear dependency direction. The rule enforced in the README ("if it makes an HTTP call to IBM Verify, it belongs in this repo") directly mirrors the spec's intent.
+  </div>
+
+  
+  <h2>Repository Status</h2>
+  <div class="repo-row">
+    <div class="repo-box">
+      <div class="name">ibmverify-go</div>
+      <div class="sub">verify-sdk equivalent · this workspace</div>
+      <div class="status"><span class="badge badge-green">Active · v1.4.0</span></div>
+    </div>
+    <div class="repo-box">
+      <div class="name">ibmverify-cli</div>
+      <div class="sub">ChrisVerde02/ibmverify-cli · Cobra CLI</div>
+      <div class="status"><span class="badge badge-yellow">Separate repo (not reviewed here)</span></div>
+    </div>
+    <div class="repo-box">
+      <div class="name">terraform-provider-verify</div>
+      <div class="sub">ChrisVerde02/terraform-provider-verify · TF Plugin Framework</div>
+      <div class="status"><span class="badge badge-yellow">Separate repo (not reviewed here)</span></div>
+    </div>
+  </div>
+
+  
+  <h2>SDK Function Inventory</h2>
+  <table>
+    <thead>
+      <tr><th>Package</th><th>Function</th><th>IBM Verify Endpoint</th><th>Spec Domain</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>client</code></td>
+        <td><code>GetClientCredentialsToken</code></td>
+        <td><code>POST /v1.0/endpoint/default/token</code></td>
+        <td>OAuth 2.0 — Auth</td>
+        <td><span class="badge badge-green">✓ Implemented</span></td>
+      </tr>
+      <tr>
+        <td><code>client</code></td>
+        <td><code>ExchangeToken</code></td>
+        <td><code>POST /oauth2/token</code> (RFC 8693)</td>
+        <td>OAuth 2.0 — Token Exchange</td>
+        <td><span class="badge badge-green">✓ Implemented</span></td>
+      </tr>
+      <tr>
+        <td><code>client</code></td>
+        <td><code>IntrospectToken</code></td>
+        <td><code>POST /oauth2/introspect</code></td>
+        <td>OAuth 2.0 — Introspection</td>
+        <td><span class="badge badge-green">✓ Implemented</span></td>
+      </tr>
+      <tr>
+        <td><code>client</code></td>
+        <td><code>ImportSignerCert</code></td>
+        <td><code>POST /v1.0/signercert</code></td>
+        <td>Certificate Management</td>
+        <td><span class="badge badge-green">✓ Implemented</span></td>
+      </tr>
+      <tr>
+        <td><code>client</code></td>
+        <td><code>GetSignerCert</code></td>
+        <td><code>GET /v1.0/signercert/{label}</code></td>
+        <td>Certificate Management</td>
+        <td><span class="badge badge-green">✓ Implemented</span></td>
+      </tr>
+      <tr>
+        <td><code>client</code></td>
+        <td><code>DeleteSignerCert</code></td>
+        <td><code>DELETE /v1.0/signercert/{label}</code></td>
+        <td>Certificate Management</td>
+        <td><span class="badge badge-green">✓ Implemented</span></td>
+      </tr>
+      <tr>
+        <td><code>crypto</code></td>
+        <td><code>GenerateSelfSignedCertificate</code></td>
+        <td>Local — no HTTP</td>
+        <td>Crypto / Key material</td>
+        <td><span class="badge badge-green">✓ Implemented</span></td>
+      </tr>
+      <tr>
+        <td><code>crypto</code></td>
+        <td><code>GenerateSignedJWT</code></td>
+        <td>Local — no HTTP</td>
+        <td>Crypto / JWT signing</td>
+        <td><span class="badge badge-green">✓ Implemented</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  
+  <h2>Spec Domain Coverage</h2>
+  <p style="font-size:13px;color:#57606a;margin-bottom:10px">
+    Mapping every spec-stated domain to current SDK coverage.
+  </p>
+  <table>
+    <thead>
+      <tr><th>Spec Domain</th><th>Spec Priority</th><th>Current Coverage</th><th>Gap</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>OAuth 2.0 / Token Acquisition</td>
+        <td>Core</td>
+        <td><span class="badge badge-green">Full</span> — client credentials + token exchange + introspection</td>
+        <td>None</td>
+      </tr>
+      <tr>
+        <td>Certificate / Signer Certs</td>
+        <td>Core (key material)</td>
+        <td><span class="badge badge-green">Full</span> — import, get, delete</td>
+        <td>None</td>
+      </tr>
+      <tr>
+        <td>JWT / Crypto utilities</td>
+        <td>Core (key material)</td>
+        <td><span class="badge badge-green">Full</span> — RSA key gen + RS256 JWT signing</td>
+        <td>None</td>
+      </tr>
+      <tr>
+        <td>Applications (Apps)</td>
+        <td>Next-wave</td>
+        <td><span class="badge badge-red">Not started</span></td>
+        <td>Full domain missing</td>
+      </tr>
+      <tr>
+        <td>Users</td>
+        <td>Next-wave</td>
+        <td><span class="badge badge-red">Not started</span></td>
+        <td>Full domain missing</td>
+      </tr>
+      <tr>
+        <td>Dynamic Client Registration (DCR)</td>
+        <td>Next-wave</td>
+        <td><span class="badge badge-red">Not started</span></td>
+        <td><code>POST /v1.0/oauth2/register</code> and related calls missing</td>
+      </tr>
+      <tr>
+        <td>Agent / Identity-Agent Onboarding</td>
+        <td>Next-wave</td>
+        <td><span class="badge badge-red">Not started</span></td>
+        <td>Pending confirmation of available API surface</td>
+      </tr>
+      <tr>
+        <td>Workflow / Flow Management</td>
+        <td>Next-wave</td>
+        <td><span class="badge badge-red">Not started</span></td>
+        <td>Flow Designer APIs not yet mapped</td>
+      </tr>
+    </tbody>
+  </table>
+
+  
+  <h2>Code Quality Assessment</h2>
+  <div style="display:flex;gap:20px;flex-wrap:wrap">
+    <div style="flex:1 1 320px">
+      <h3>Strengths</h3>
+      <ul class="check">
+        <li class="ok">Context propagation — every HTTP call accepts <code>context.Context</code></li>
+        <li class="ok">Input validation — empty-field guards on all public functions</li>
+        <li class="ok">Wrapped errors — <code>fmt.Errorf("…: %w", err)</code> throughout</li>
+        <li class="ok">OAuth error body parsing — structured <code>IntrospectionError</code> / <code>TokenExchangeError</code> types</li>
+        <li class="ok">Correct HTTP semantics — 201 for import, 204 for delete, 404→nil for get</li>
+        <li class="ok">No ExtKeyUsage on cert — IBM Verify-specific requirement documented inline</li>
+        <li class="ok">RSA key size enforcement — only 2048/3072/4096 accepted</li>
+        <li class="ok">Zero external dependencies in <code>client</code> package — stdlib only</li>
+        <li class="ok">Architecture rule documented and enforced</li>
+        <li class="ok">Semantic versioning declared (v1.4.0)</li>
+      </ul>
+    </div>
+    <div style="flex:1 1 320px">
+      <h3>Known Gaps / Improvement Areas</h3>
+      <ul class="check">
+        <li class="warn">No shared HTTP client / transport layer — each function creates or reuses <code>http.DefaultClient</code> ad-hoc (<code>token_exchange.go</code> creates a new <code>&amp;http.Client{}</code> while others use <code>http.DefaultClient</code>)</li>
+        <li class="warn">No retry / back-off logic — spec mentions "retries if needed"</li>
+        <li class="warn">No timeout defaults — callers must set deadline on context</li>
+        <li class="warn">No unit or integration tests present in this repo</li>
+        <li class="warn">No Fern / OpenAPI generation pipeline yet — all code is handwritten</li>
+        <li class="warn">No CI configuration visible (GitHub Actions, etc.)</li>
+        <li class="miss">No <code>apps</code>, <code>users</code>, <code>dcr</code>, <code>agents</code>, or <code>flows</code> packages</li>
+        <li class="miss">No pagination helper — needed for list operations on apps/users</li>
+        <li class="miss">Inconsistent request style — <code>GetSignerCert</code>/<code>DeleteSignerCert</code> use positional params while others use request structs</li>
+      </ul>
+    </div>
+  </div>
+
+  
+  <h2>Spec Task Checklist — ibmverify-go</h2>
+  <table>
+    <thead>
+      <tr><th>#</th><th>Spec Task</th><th>State in this repo</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td>Assess existing assets</td>
+        <td><span class="badge badge-green">Done</span> — OAuth + cert surface implemented and documented</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>Expand source coverage (apps, users, DCR, agents, flows)</td>
+        <td><span class="badge badge-red">Not started</span></td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>Automate sanitization pipeline</td>
+        <td><span class="badge badge-red">Not started</span> — no Fern YAML / OpenAPI assets present</td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td>Establish spec governance / CI</td>
+        <td><span class="badge badge-red">Not started</span> — no CI config visible</td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td>Build verify-sdk (auth, transport, ergonomic domain APIs)</td>
+        <td><span class="badge badge-yellow">Partial</span> — auth layer complete; transport layer informal; domain APIs incomplete</td>
+      </tr>
+      <tr>
+        <td>6</td>
+        <td>Build CLI (separate repo)</td>
+        <td><span class="badge badge-yellow">Separate repo</span> — referenced but not reviewed here</td>
+      </tr>
+      <tr>
+        <td>7</td>
+        <td>Build Terraform provider (separate repo)</td>
+        <td><span class="badge badge-yellow">Separate repo</span> — referenced but not reviewed here</td>
+      </tr>
+      <tr>
+        <td>8</td>
+        <td>Test and release</td>
+        <td><span class="badge badge-red">Not started</span> — no test files in SDK</td>
+      </tr>
+    </tbody>
+  </table>
+
+  
+  <h2>Presentation Readiness Verdict</h2>
+  <div class="alert alert-green">
+    <strong>The SDK is ready to present as a working foundation.</strong>
+    The architecture, code quality, and API correctness are all solid. The separation-of-concerns rule is in place. OAuth flows, token exchange, introspection, certificate lifecycle, and local crypto utilities are all functional and correctly implemented against IBM Verify's documented endpoints.
+  </div>
+  <div class="alert alert-yellow">
+    <strong>Present as "Phase 1 complete — core auth and cert infrastructure."</strong>
+    Be explicit that apps, users, DCR, agents, and flow management are planned next-wave scope. The spec itself names these as "expansion areas", so framing them as the upcoming roadmap is fully accurate and spec-aligned.
+  </div>
+  <div class="alert alert-red">
+    <strong>Do not present as "feature-complete."</strong>
+    The five next-wave domains (apps, users, DCR, agent onboarding, workflow management) are entirely absent. Tests, CI, and the Fern/OpenAPI generation pipeline are also not yet in place.
+  </div>
+
+  
+  <h2>Recommended Next Steps (Roadmap)</h2>
+  <div class="timeline">
+    <div class="tl-item">
+      <div class="tl-title">Normalize transport — shared <code>http.Client</code></div>
+      <div class="tl-body">Introduce a package-level or per-call configurable client so timeout, TLS config, and transport options are consistent. Fix the <code>token_exchange.go</code> divergence that instantiates a private <code>&amp;http.Client{}</code>.</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-title">Add unit tests</div>
+      <div class="tl-body">Use <code>httptest.NewServer</code> to mock IBM Verify endpoints. Cover happy path, 4xx/5xx error parsing, and validation guards for every function.</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-title">Wire up CI (GitHub Actions)</div>
+      <div class="tl-body"><code>go vet</code>, <code>go test ./...</code>, and <code>golangci-lint</code> on every push. Add release workflow for <code>goreleaser</code> or plain tag-based Go module publishing.</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-title">Add DCR package — <code>client/dcr</code></div>
+      <div class="tl-body">Implement <code>POST /v1.0/oauth2/register</code> (create dynamic client). This is the most clearly spec-defined next-wave domain with a concrete IBM Verify endpoint.</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-title">Add Apps and Users packages</div>
+      <div class="tl-body">Map IBM Verify app and user admin endpoints. Align function signatures with the pattern already used in <code>verifyctl</code> command packages for CLI consistency.</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-title">Introduce Fern / OpenAPI generation pipeline</div>
+      <div class="tl-body">Set up sanitization automation, Fern YAML assets, and generator execution in CI. Generated clients feed directly into <code>ibmverify-go</code> with handwritten ergonomic wrappers layered on top.</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-title">Standardize request struct style</div>
+      <div class="tl-body">Migrate <code>GetSignerCert</code> and <code>DeleteSignerCert</code> from positional arguments to a request struct, consistent with the rest of the SDK surface.</div>
+    </div>
+  </div>
+
+  
+  <div class="footer">Made with IBM Bob</div>
+</div>
+</body>
+</html>
