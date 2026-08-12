@@ -154,7 +154,7 @@ func (cr *CertsClient) Delete(ctx context.Context, label string) error {
 
 // importWithToken is used by the backwards-compat shim when a pre-obtained
 // token is passed directly (legacy ImportSignerCert behaviour).
-func (cr *CertsClient) importWithToken(ctx context.Context, label, certificatePEM, accessToken string) error {
+func (cr *CertsClient) ImportWithToken(ctx context.Context, label, certificatePEM, accessToken string) error {
 	if strings.TrimSpace(label) == "" {
 		return fmt.Errorf("import cert: label cannot be empty")
 	}
@@ -196,7 +196,7 @@ func (cr *CertsClient) importWithToken(ctx context.Context, label, certificatePE
 }
 
 // getWithToken is used by the backwards-compat shim.
-func (cr *CertsClient) getWithToken(ctx context.Context, label, accessToken string) (*CertResult, error) {
+func (cr *CertsClient) GetWithToken(ctx context.Context, label, accessToken string) (*CertResult, error) {
 	if strings.TrimSpace(label) == "" {
 		return nil, fmt.Errorf("get cert: label cannot be empty")
 	}
@@ -235,7 +235,7 @@ func (cr *CertsClient) getWithToken(ctx context.Context, label, accessToken stri
 }
 
 // deleteWithToken is used by the backwards-compat shim.
-func (cr *CertsClient) deleteWithToken(ctx context.Context, label, accessToken string) error {
+func (cr *CertsClient) DeleteWithToken(ctx context.Context, label, accessToken string) error {
 	if strings.TrimSpace(label) == "" {
 		return fmt.Errorf("delete cert: label cannot be empty")
 	}
