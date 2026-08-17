@@ -9,8 +9,32 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"regexp"
 	"strings"
 )
+
+// labelRe validates signer certificate labels.
+// Allows letters, digits, dots, hyphens, underscores — 1 to 128 characters.
+// This also prevents path-traversal attacks ("..", "/", etc.) via the label
+// in URLs like /v1.0/signercert/{label}.
+var labelRe = regexp.MustCompile(`^[A-Za-z0-9._\-]{1,128}$`)
+
+// validateLabel returns an error if label is empty or contains unsafe characters.
+func validateLabel(op, label string) error {
+	if strings.TrimSpace(label) == "" {
+		return fmt.Errorf("%s: label cannot be empty", op)
+	}
+	if !labelRe.MatchString(label) {
+		return fmt.Errorf("%s: label %q contains invalid characters — only letters, digits, dots, hyphens, and underscores are allowed (1–128 chars)", op, label)
+	}
+	return nil
+}
+
+// signerCertPath returns the escaped URL path for a labelled signer cert.
+func signerCertPath(label string) string {
+	return "/v1.0/signercert/" + url.PathEscape(label)
+}
 
 // CertsClient provides signer certificate management against IBM Verify.
 // Access it via Client.Certs.
@@ -55,8 +79,8 @@ func normaliseCertPEM(raw string) string {
 //
 //	POST /v1.0/signercert
 func (cr *CertsClient) Import(ctx context.Context, label, certificatePEM string) error {
-	if strings.TrimSpace(label) == "" {
-		return fmt.Errorf("import cert: label cannot be empty")
+	if err := validateLabel("import cert", label); err != nil {
+		return err
 	}
 	if strings.TrimSpace(certificatePEM) == "" {
 		return fmt.Errorf("import cert: certificate PEM cannot be empty")
@@ -91,7 +115,7 @@ func (cr *CertsClient) Import(ctx context.Context, label, certificatePEM string)
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusCreated {
-		b, _ := io.ReadAll(resp.Body)
+		b, _ := io.ReadAll(io.LimitReader(resp.Body, maxResponseBody))
 		return fmt.Errorf("import cert: HTTP %d: %s", resp.StatusCode, string(b))
 	}
 	return nil
@@ -102,8 +126,8 @@ func (cr *CertsClient) Import(ctx context.Context, label, certificatePEM string)
 //
 //	GET /v1.0/signercert/{label}
 func (cr *CertsClient) Get(ctx context.Context, label string) (*CertResult, error) {
-	if strings.TrimSpace(label) == "" {
-		return nil, fmt.Errorf("get cert: label cannot be empty")
+	if err := validateLabel("get cert", label); err != nil {
+		return nil, err
 	}
 
 	token, err := cr.c.Token.ClientCredentials(ctx)
@@ -112,7 +136,7 @@ func (cr *CertsClient) Get(ctx context.Context, label string) (*CertResult, erro
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet,
-		cr.c.endpoint("/v1.0/signercert/"+label), nil)
+		cr.c.endpoint(signerCertPath(label)), nil)
 	if err != nil {
 		return nil, fmt.Errorf("get cert: create request: %w", err)
 	}
@@ -125,7 +149,7 @@ func (cr *CertsClient) Get(ctx context.Context, label string) (*CertResult, erro
 	}
 	defer resp.Body.Close()
 
-	body, _ := io.ReadAll(resp.Body)
+	body, _ := io.ReadAll(io.LimitReader(resp.Body, maxResponseBody))
 
 	if resp.StatusCode == http.StatusNotFound {
 		return nil, nil // cert does not exist — not an error
@@ -146,8 +170,8 @@ func (cr *CertsClient) Get(ctx context.Context, label string) (*CertResult, erro
 //
 //	DELETE /v1.0/signercert/{label}
 func (cr *CertsClient) Delete(ctx context.Context, label string) error {
-	if strings.TrimSpace(label) == "" {
-		return fmt.Errorf("delete cert: label cannot be empty")
+	if err := validateLabel("delete cert", label); err != nil {
+		return err
 	}
 
 	token, err := cr.c.Token.ClientCredentials(ctx)
@@ -156,7 +180,7 @@ func (cr *CertsClient) Delete(ctx context.Context, label string) error {
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete,
-		cr.c.endpoint("/v1.0/signercert/"+label), nil)
+		cr.c.endpoint(signerCertPath(label)), nil)
 	if err != nil {
 		return fmt.Errorf("delete cert: create request: %w", err)
 	}
@@ -170,17 +194,17 @@ func (cr *CertsClient) Delete(ctx context.Context, label string) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusNoContent {
-		b, _ := io.ReadAll(resp.Body)
+		b, _ := io.ReadAll(io.LimitReader(resp.Body, maxResponseBody))
 		return fmt.Errorf("delete cert: HTTP %d: %s", resp.StatusCode, string(b))
 	}
 	return nil
 }
 
-// importWithToken is used by the backwards-compat shim when a pre-obtained
+// ImportWithToken is used by the backwards-compat shim when a pre-obtained
 // token is passed directly (legacy ImportSignerCert behaviour).
 func (cr *CertsClient) ImportWithToken(ctx context.Context, label, certificatePEM, accessToken string) error {
-	if strings.TrimSpace(label) == "" {
-		return fmt.Errorf("import cert: label cannot be empty")
+	if err := validateLabel("import cert", label); err != nil {
+		return err
 	}
 	if strings.TrimSpace(certificatePEM) == "" {
 		return fmt.Errorf("import cert: certificate PEM cannot be empty")
@@ -213,23 +237,23 @@ func (cr *CertsClient) ImportWithToken(ctx context.Context, label, certificatePE
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusCreated {
-		b, _ := io.ReadAll(resp.Body)
+		b, _ := io.ReadAll(io.LimitReader(resp.Body, maxResponseBody))
 		return fmt.Errorf("import cert: HTTP %d: %s", resp.StatusCode, string(b))
 	}
 	return nil
 }
 
-// getWithToken is used by the backwards-compat shim.
+// GetWithToken is used by the backwards-compat shim.
 func (cr *CertsClient) GetWithToken(ctx context.Context, label, accessToken string) (*CertResult, error) {
-	if strings.TrimSpace(label) == "" {
-		return nil, fmt.Errorf("get cert: label cannot be empty")
+	if err := validateLabel("get cert", label); err != nil {
+		return nil, err
 	}
 	if strings.TrimSpace(accessToken) == "" {
 		return nil, fmt.Errorf("get cert: access token cannot be empty")
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet,
-		cr.c.endpoint("/v1.0/signercert/"+label), nil)
+		cr.c.endpoint(signerCertPath(label)), nil)
 	if err != nil {
 		return nil, fmt.Errorf("get cert: create request: %w", err)
 	}
@@ -242,7 +266,7 @@ func (cr *CertsClient) GetWithToken(ctx context.Context, label, accessToken stri
 	}
 	defer resp.Body.Close()
 
-	body, _ := io.ReadAll(resp.Body)
+	body, _ := io.ReadAll(io.LimitReader(resp.Body, maxResponseBody))
 
 	if resp.StatusCode == http.StatusNotFound {
 		return nil, nil
@@ -259,17 +283,17 @@ func (cr *CertsClient) GetWithToken(ctx context.Context, label, accessToken stri
 	return &result, nil
 }
 
-// deleteWithToken is used by the backwards-compat shim.
+// DeleteWithToken is used by the backwards-compat shim.
 func (cr *CertsClient) DeleteWithToken(ctx context.Context, label, accessToken string) error {
-	if strings.TrimSpace(label) == "" {
-		return fmt.Errorf("delete cert: label cannot be empty")
+	if err := validateLabel("delete cert", label); err != nil {
+		return err
 	}
 	if strings.TrimSpace(accessToken) == "" {
 		return fmt.Errorf("delete cert: access token cannot be empty")
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete,
-		cr.c.endpoint("/v1.0/signercert/"+label), nil)
+		cr.c.endpoint(signerCertPath(label)), nil)
 	if err != nil {
 		return fmt.Errorf("delete cert: create request: %w", err)
 	}
@@ -283,7 +307,7 @@ func (cr *CertsClient) DeleteWithToken(ctx context.Context, label, accessToken s
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusNoContent {
-		b, _ := io.ReadAll(resp.Body)
+		b, _ := io.ReadAll(io.LimitReader(resp.Body, maxResponseBody))
 		return fmt.Errorf("delete cert: HTTP %d: %s", resp.StatusCode, string(b))
 	}
 	return nil

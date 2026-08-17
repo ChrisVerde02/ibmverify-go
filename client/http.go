@@ -10,6 +10,10 @@ import (
 	"strings"
 )
 
+// maxResponseBody caps how many bytes we read from any IBM Verify response.
+// Protects against hostile or misbehaving servers OOM-ing the process.
+const maxResponseBody = 10 * 1024 * 1024 // 10 MiB
+
 // postForm sends a POST with an application/x-www-form-urlencoded body.
 // bearerToken is optional; pass "" to omit the Authorization header.
 func (c *Client) postForm(ctx context.Context, path string, form url.Values, bearerToken string) ([]byte, error) {
@@ -34,7 +38,7 @@ func (c *Client) do(req *http.Request) ([]byte, error) {
 	}
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(io.LimitReader(resp.Body, maxResponseBody))
 	if err != nil {
 		return nil, fmt.Errorf("read response body: %w", err)
 	}
