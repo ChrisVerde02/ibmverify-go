@@ -1,4 +1,4 @@
-module github.com/ChrisVerde02/ibmverify-go
+module github.ibm.com/Christian-Verderame/ibmverify-go
 
 go 1.23
 

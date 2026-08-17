@@ -8,7 +8,7 @@ package legacy
 import (
 	"context"
 
-	"github.com/ChrisVerde02/ibmverify-go/client"
+	"github.ibm.com/Christian-Verderame/ibmverify-go/client"
 )
 
 // GetClientCredentialsToken fetches an access token using the OAuth 2.0

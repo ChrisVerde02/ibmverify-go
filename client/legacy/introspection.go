@@ -3,7 +3,7 @@ package legacy
 import (
 	"context"
 
-	"github.com/ChrisVerde02/ibmverify-go/client"
+	"github.ibm.com/Christian-Verderame/ibmverify-go/client"
 )
 
 // IntrospectionRequest contains the values sent to IBM Verify.
