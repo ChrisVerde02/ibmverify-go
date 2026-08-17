@@ -3,7 +3,7 @@ package legacy
 import (
 	"context"
 
-	"github.ibm.com/Christian-Verderame/ibmverify-go/client"
+	"github.com/ChrisVerde02/ibmverify-go/client"
 )
 
 // TokenExchangeRequest contains the values sent to IBM Verify.
