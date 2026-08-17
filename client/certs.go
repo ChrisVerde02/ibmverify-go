@@ -114,15 +114,15 @@ func (cr *CertsClient) Import(ctx context.Context, label, certificatePEM string)
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusCreated {
-		b, _ := io.ReadAll(io.LimitReader(resp.Body, maxResponseBody))
-		return fmt.Errorf("import cert: HTTP %d: %s", resp.StatusCode, string(b))
+	b, _ := io.ReadAll(io.LimitReader(resp.Body, maxResponseBody))
+	if err := checkStatus(resp, b, signerCertPath(label), http.StatusCreated); err != nil {
+		return fmt.Errorf("import cert: %w", err)
 	}
 	return nil
 }
 
 // Get retrieves a signer certificate by label.
-// Returns nil, nil when the certificate does not exist (HTTP 404).
+// Returns nil, ErrNotFound when the certificate does not exist (HTTP 404).
 //
 //	GET /v1.0/signercert/{label}
 func (cr *CertsClient) Get(ctx context.Context, label string) (*CertResult, error) {
@@ -152,10 +152,10 @@ func (cr *CertsClient) Get(ctx context.Context, label string) (*CertResult, erro
 	body, _ := io.ReadAll(io.LimitReader(resp.Body, maxResponseBody))
 
 	if resp.StatusCode == http.StatusNotFound {
-		return nil, nil // cert does not exist — not an error
+		return nil, ErrNotFound
 	}
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("get cert: HTTP %d: %s", resp.StatusCode, string(body))
+	if err := checkStatus(resp, body, signerCertPath(label), http.StatusOK); err != nil {
+		return nil, fmt.Errorf("get cert: %w", err)
 	}
 
 	var result CertResult
@@ -193,9 +193,9 @@ func (cr *CertsClient) Delete(ctx context.Context, label string) error {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusNoContent {
-		b, _ := io.ReadAll(io.LimitReader(resp.Body, maxResponseBody))
-		return fmt.Errorf("delete cert: HTTP %d: %s", resp.StatusCode, string(b))
+	b, _ := io.ReadAll(io.LimitReader(resp.Body, maxResponseBody))
+	if err := checkStatus(resp, b, signerCertPath(label), http.StatusNoContent); err != nil {
+		return fmt.Errorf("delete cert: %w", err)
 	}
 	return nil
 }
@@ -236,9 +236,9 @@ func (cr *CertsClient) ImportWithToken(ctx context.Context, label, certificatePE
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusCreated {
-		b, _ := io.ReadAll(io.LimitReader(resp.Body, maxResponseBody))
-		return fmt.Errorf("import cert: HTTP %d: %s", resp.StatusCode, string(b))
+	b, _ := io.ReadAll(io.LimitReader(resp.Body, maxResponseBody))
+	if err := checkStatus(resp, b, signerCertPath(label), http.StatusCreated); err != nil {
+		return fmt.Errorf("import cert: %w", err)
 	}
 	return nil
 }
@@ -269,10 +269,10 @@ func (cr *CertsClient) GetWithToken(ctx context.Context, label, accessToken stri
 	body, _ := io.ReadAll(io.LimitReader(resp.Body, maxResponseBody))
 
 	if resp.StatusCode == http.StatusNotFound {
-		return nil, nil
+		return nil, ErrNotFound
 	}
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("get cert: HTTP %d: %s", resp.StatusCode, string(body))
+	if err := checkStatus(resp, body, signerCertPath(label), http.StatusOK); err != nil {
+		return nil, fmt.Errorf("get cert: %w", err)
 	}
 
 	var result CertResult
@@ -306,9 +306,9 @@ func (cr *CertsClient) DeleteWithToken(ctx context.Context, label, accessToken s
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusNoContent {
-		b, _ := io.ReadAll(io.LimitReader(resp.Body, maxResponseBody))
-		return fmt.Errorf("delete cert: HTTP %d: %s", resp.StatusCode, string(b))
+	b, _ := io.ReadAll(io.LimitReader(resp.Body, maxResponseBody))
+	if err := checkStatus(resp, b, signerCertPath(label), http.StatusNoContent); err != nil {
+		return fmt.Errorf("delete cert: %w", err)
 	}
 	return nil
 }

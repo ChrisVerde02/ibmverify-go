@@ -14,6 +14,51 @@ import (
 // Protects against hostile or misbehaving servers OOM-ing the process.
 const maxResponseBody = 10 * 1024 * 1024 // 10 MiB
 
+// checkStatus converts a non-2xx HTTP response into a typed *APIError.
+// It tries to parse IBM Verify's structured error body first; falls back
+// to the raw body as the message. Callers pass the expected success code(s)
+// so each endpoint documents its contract explicitly.
+//
+// For GET endpoints that treat 404 as "not found" (not an error), callers
+// should check resp.StatusCode == http.StatusNotFound before calling
+// checkStatus.
+func checkStatus(resp *http.Response, body []byte, endpoint string, allowed ...int) error {
+	for _, code := range allowed {
+		if resp.StatusCode == code {
+			return nil
+		}
+	}
+
+	apiErr := &APIError{
+		StatusCode: resp.StatusCode,
+		Endpoint:   endpoint,
+	}
+
+	// Try IBM Verify structured JSON error body first.
+	var structured struct {
+		Error            string `json:"error"`
+		ErrorDescription string `json:"error_description"`
+		MessageID        string `json:"messageId"`
+		MessageDesc      string `json:"messageDescription"`
+	}
+	if json.Unmarshal(body, &structured) == nil {
+		switch {
+		case structured.Error != "":
+			apiErr.Code = structured.Error
+			apiErr.Message = structured.ErrorDescription
+		case structured.MessageID != "":
+			apiErr.Code = structured.MessageID
+			apiErr.Message = structured.MessageDesc
+		default:
+			apiErr.Message = string(body)
+		}
+	} else {
+		apiErr.Message = string(body)
+	}
+
+	return apiErr
+}
+
 // postForm sends a POST with an application/x-www-form-urlencoded body.
 // bearerToken is optional; pass "" to omit the Authorization header.
 func (c *Client) postForm(ctx context.Context, path string, form url.Values, bearerToken string) ([]byte, error) {
@@ -31,6 +76,8 @@ func (c *Client) postForm(ctx context.Context, path string, form url.Values, bea
 }
 
 // do executes an http.Request and returns the body, or an error for non-2xx.
+// It returns a typed *APIError for all non-2xx responses so callers can use
+// errors.As() to inspect status codes without string parsing.
 func (c *Client) do(req *http.Request) ([]byte, error) {
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -43,18 +90,8 @@ func (c *Client) do(req *http.Request) ([]byte, error) {
 		return nil, fmt.Errorf("read response body: %w", err)
 	}
 
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		// Try to extract an OAuth error description first.
-		var oauthErr struct {
-			Error            string `json:"error"`
-			ErrorDescription string `json:"error_description"`
-		}
-		if jsonErr := json.Unmarshal(body, &oauthErr); jsonErr == nil && oauthErr.Error != "" {
-			return nil, fmt.Errorf("IBM Verify failed with HTTP %d: %s: %s",
-				resp.StatusCode, oauthErr.Error, oauthErr.ErrorDescription)
-		}
-		return nil, fmt.Errorf("IBM Verify failed with HTTP %d: %s",
-			resp.StatusCode, string(body))
+	if err := checkStatus(resp, body, req.URL.Path, http.StatusOK, http.StatusCreated, http.StatusNoContent, http.StatusAccepted); err != nil {
+		return nil, err
 	}
 
 	return body, nil

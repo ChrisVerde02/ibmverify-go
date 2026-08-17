@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -103,11 +104,8 @@ func TestCertsGet_notFound(t *testing.T) {
 
 	c, _ := New(srv.URL, WithClientCredentials("cm-id", "cm-secret"))
 	result, err := c.Certs.Get(context.Background(), "missing")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if result != nil {
-		t.Errorf("expected nil for 404, got %+v", result)
+	if !errors.Is(err, ErrNotFound) {
+		t.Fatalf("expected ErrNotFound for 404, got err=%v result=%+v", err, result)
 	}
 }
 
