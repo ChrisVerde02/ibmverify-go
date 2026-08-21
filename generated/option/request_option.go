@@ -3,45 +3,101 @@
 package option
 
 import (
-	"net/http"
-	"net/url"
+	core "github.com/ChrisVerde02/ibmverify-go/generated/core"
+	http "net/http"
+	url "net/url"
 )
 
-// RequestOptions holds per-request configuration.
-type RequestOptions struct {
-	BaseURL         string
-	HTTPClient      *http.Client
-	HTTPHeader      http.Header
-	QueryParameters url.Values
-	BodyProperties  map[string]interface{}
-	MaxAttempts     int
-	DisableRetries  bool
-	APIKey          string
-}
+// RequestOption adapts the behavior of an individual request.
+type RequestOption = core.RequestOption
 
-// RequestOption is a functional option applied to RequestOptions.
-type RequestOption func(*RequestOptions)
-
-// WithBaseURL overrides the base URL for a single request.
-func WithBaseURL(baseURL string) RequestOption {
-	return func(o *RequestOptions) {
-		o.BaseURL = baseURL
+// WithBaseURL sets the base URL, overriding the default
+// environment, if any.
+func WithBaseURL(baseURL string) *core.BaseURLOption {
+	return &core.BaseURLOption{
+		BaseURL: baseURL,
 	}
 }
 
-// WithHTTPHeader adds a custom header to a single request.
-func WithHTTPHeader(key, value string) RequestOption {
-	return func(o *RequestOptions) {
-		if o.HTTPHeader == nil {
-			o.HTTPHeader = make(http.Header)
-		}
-		o.HTTPHeader.Set(key, value)
+// WithHTTPClient uses the given HTTPClient to issue the request.
+func WithHTTPClient(httpClient core.HTTPClient) *core.HTTPClientOption {
+	return &core.HTTPClientOption{
+		HTTPClient: httpClient,
 	}
 }
 
-// WithAPIKey sets the bearer token for a single request.
-func WithAPIKey(apiKey string) RequestOption {
-	return func(o *RequestOptions) {
-		o.APIKey = apiKey
+// WithHTTPHeader adds the given http.Header to the request.
+func WithHTTPHeader(httpHeader http.Header) *core.HTTPHeaderOption {
+	return &core.HTTPHeaderOption{
+		// Clone the headers so they can't be modified after the option call.
+		HTTPHeader: httpHeader.Clone(),
+	}
+}
+
+// WithBodyProperties adds the given body properties to the request.
+func WithBodyProperties(bodyProperties map[string]interface{}) *core.BodyPropertiesOption {
+	copiedBodyProperties := make(map[string]interface{}, len(bodyProperties))
+	for key, value := range bodyProperties {
+		copiedBodyProperties[key] = value
+	}
+	return &core.BodyPropertiesOption{
+		BodyProperties: copiedBodyProperties,
+	}
+}
+
+// WithQueryParameters adds the given query parameters to the request.
+func WithQueryParameters(queryParameters url.Values) *core.QueryParametersOption {
+	copiedQueryParameters := make(url.Values, len(queryParameters))
+	for key, values := range queryParameters {
+		copiedQueryParameters[key] = values
+	}
+	return &core.QueryParametersOption{
+		QueryParameters: copiedQueryParameters,
+	}
+}
+
+// WithMaxAttempts configures the maximum number of retry attempts.
+func WithMaxAttempts(attempts uint) *core.MaxAttemptsOption {
+	return &core.MaxAttemptsOption{
+		MaxAttempts: attempts,
+	}
+}
+
+// WithMaxStreamBufSize configures the maximum buffer size for streaming responses.
+// This controls the maximum size of a single message (in bytes) that the stream
+// can process. By default, this is set to 1MB.
+func WithMaxStreamBufSize(size int) *core.MaxBufSizeOption {
+	return &core.MaxBufSizeOption{
+		MaxBufSize: size,
+	}
+}
+
+// WithMaxStreamReconnectAttempts caps the number of transparent mid-stream
+// reconnect attempts on streaming endpoints that support resumption. The
+// reconnect loop honors Last-Event-ID and any server-sent `retry:` directives.
+// Has no effect on endpoints that don't support resumption.
+func WithMaxStreamReconnectAttempts(attempts uint) *core.MaxStreamReconnectAttemptsOption {
+	return &core.MaxStreamReconnectAttemptsOption{
+		MaxStreamReconnectAttempts: attempts,
+	}
+}
+
+// WithoutStreamReconnection disables transparent mid-stream reconnection on
+// resumable SSE endpoints. Has no effect on non-resumable endpoints.
+func WithoutStreamReconnection() *core.WithoutStreamReconnectionOption {
+	return &core.WithoutStreamReconnectionOption{}
+}
+
+// WithoutRetries disables HTTP-level retry attempts for the request. Use this
+// instead of WithMaxAttempts(0), which falls through to the default of 2
+// attempts.
+func WithoutRetries() *core.WithoutRetriesOption {
+	return &core.WithoutRetriesOption{}
+}
+
+// WithAPIKey sets the apiKey auth request header.
+func WithAPIKey(apiKey string) *core.APIKeyOption {
+	return &core.APIKeyOption{
+		APIKey: apiKey,
 	}
 }
