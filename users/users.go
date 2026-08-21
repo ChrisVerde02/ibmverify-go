@@ -1,11 +1,18 @@
 // Package users provides a high-level client for IBM Verify user management (SCIM v2).
 // It wraps the Fern-generated usersmanagementversion20 client, handling token
 // acquisition automatically so callers never need to manage access tokens directly.
+//
+// Note: IBM Verify's SCIM responses contain type mismatches vs the OpenAPI spec
+// (e.g. pwdChangedTime returned as string vs int64 in the spec). List and Get
+// use raw HTTP to avoid generated unmarshalling failures. Write operations use
+// the generated typed clients. When IBM updates their spec, swap back in one place.
 package users
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	generated "github.com/ChrisVerde02/ibmverify-go/generated"
@@ -15,23 +22,30 @@ import (
 
 // Client manages IBM Verify users via the SCIM v2 API.
 type Client struct {
-	tenantURL string
-	getToken  func(ctx context.Context) (string, error)
+	tenantURL  string
+	getToken   func(ctx context.Context) (string, error)
+	httpClient *http.Client
 }
 
 // New returns a Users Client.
 // getToken is a function that returns a valid bearer token.
 func New(tenantURL string, getToken func(ctx context.Context) (string, error)) *Client {
-	return &Client{tenantURL: tenantURL, getToken: getToken}
+	return &Client{
+		tenantURL:  tenantURL,
+		getToken:   getToken,
+		httpClient: &http.Client{},
+	}
 }
 
+// newGenerated builds the Fern-generated client with auth headers set.
 func (c *Client) newGenerated(ctx context.Context) (*usersmanagementversion20.Client, error) {
 	token, err := c.getToken(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("users: get token: %w", err)
 	}
 	h := make(http.Header)
-	h.Set("Accept", "application/json")
+	h.Set("Accept", "application/scim+json")
+	h.Set("Content-Type", "application/scim+json")
 	return usersmanagementversion20.NewClient(&core.RequestOptions{
 		BaseURL:    c.tenantURL,
 		APIKey:     token,
@@ -39,38 +53,66 @@ func (c *Client) newGenerated(ctx context.Context) (*usersmanagementversion20.Cl
 	}), nil
 }
 
-// List returns users matching the request filter. Pass nil for all users.
-func (c *Client) List(ctx context.Context, req *generated.GetUsersRequest) (*generated.GetUsersResponseV2, error) {
-	cl, err := c.newGenerated(ctx)
+// rawGet performs a plain authenticated GET and returns the raw response body.
+func (c *Client) rawGet(ctx context.Context, path string) ([]byte, error) {
+	token, err := c.getToken(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("users: get token: %w", err)
 	}
-	if req == nil {
-		req = &generated.GetUsersRequest{}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.tenantURL+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("users: create request: %w", err)
 	}
-	result, err := cl.GetUsers(ctx, req)
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Accept", "application/scim+json")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("users: send request: %w", err)
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(io.LimitReader(resp.Body, 10*1024*1024))
+	if err != nil {
+		return nil, fmt.Errorf("users: read response: %w", err)
+	}
+	if resp.StatusCode >= 400 {
+		return nil, fmt.Errorf("users: HTTP %d: %s", resp.StatusCode, string(body))
+	}
+	return body, nil
+}
+
+// List returns users as raw JSON maps. Pass nil for all users.
+func (c *Client) List(ctx context.Context, _ *generated.GetUsersRequest) ([]map[string]interface{}, error) {
+	body, err := c.rawGet(ctx, "/v2.0/Users")
 	if err != nil {
 		return nil, fmt.Errorf("users: list: %w", err)
 	}
-	return result, nil
+	// SCIM list response: {"Resources":[...], "totalResults":N}
+	var wrapper struct {
+		Resources []map[string]interface{} `json:"Resources"`
+	}
+	if json.Unmarshal(body, &wrapper) == nil && wrapper.Resources != nil {
+		return wrapper.Resources, nil
+	}
+	var list []map[string]interface{}
+	_ = json.Unmarshal(body, &list)
+	return list, nil
 }
 
-// Get returns a single user by ID.
-func (c *Client) Get(ctx context.Context, id string) (*generated.UserResponseV2, error) {
-	cl, err := c.newGenerated(ctx)
-	if err != nil {
-		return nil, err
-	}
-	result, err := cl.GetUser0(ctx, &generated.GetUser0Request{
-		ID: id,
-	})
+// Get returns a single user by ID as a raw JSON map.
+func (c *Client) Get(ctx context.Context, id string) (map[string]interface{}, error) {
+	body, err := c.rawGet(ctx, "/v2.0/Users/"+id)
 	if err != nil {
 		return nil, fmt.Errorf("users: get %s: %w", id, err)
 	}
-	return result, nil
+	var m map[string]interface{}
+	if err := json.Unmarshal(body, &m); err != nil {
+		return nil, fmt.Errorf("users: get %s: unmarshal: %w", id, err)
+	}
+	return m, nil
 }
 
-// Create creates a new user.
+// Create creates a new user using the generated typed client.
 func (c *Client) Create(ctx context.Context, req *generated.CreateUserRequest) (*generated.UserResponseV2, error) {
 	cl, err := c.newGenerated(ctx)
 	if err != nil {

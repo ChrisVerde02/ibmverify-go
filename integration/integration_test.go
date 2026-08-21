@@ -54,24 +54,30 @@ func TestToken_ClientCredentials(t *testing.T) {
 
 func TestApps_List(t *testing.T) {
 	c := newClient(t)
-	result, err := c.Apps.List(context.Background(), nil)
+	apps, err := c.Apps.List(context.Background(), nil)
 	if err != nil {
 		t.Fatalf("Apps.List: %v", err)
 	}
-	b, _ := json.MarshalIndent(result, "", "  ")
-	t.Logf("Apps response:\n%s", string(b))
-	fmt.Printf("\n✓ Apps.List returned successfully\n")
+	t.Logf("Apps count: %d", len(apps))
+	if len(apps) > 0 {
+		b, _ := json.MarshalIndent(apps[0], "", "  ")
+		t.Logf("First app:\n%s", string(b))
+	}
+	fmt.Printf("\n✓ Apps.List returned %d applications\n", len(apps))
 }
 
 func TestUsers_List(t *testing.T) {
 	c := newClient(t)
-	result, err := c.Users.List(context.Background(), nil)
+	users, err := c.Users.List(context.Background(), nil)
 	if err != nil {
 		t.Fatalf("Users.List: %v", err)
 	}
-	b, _ := json.MarshalIndent(result, "", "  ")
-	t.Logf("Users response:\n%s", string(b))
-	fmt.Printf("\n✓ Users.List returned successfully\n")
+	t.Logf("Users count: %d", len(users))
+	if len(users) > 0 {
+		b, _ := json.MarshalIndent(users[0], "", "  ")
+		t.Logf("First user:\n%s", string(b))
+	}
+	fmt.Printf("\n✓ Users.List returned %d users\n", len(users))
 }
 
 func TestAPIClients_List(t *testing.T) {
