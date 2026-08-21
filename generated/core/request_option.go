@@ -3,7 +3,6 @@
 package core
 
 import (
-	fmt "fmt"
 	http "net/http"
 	url "net/url"
 )
@@ -52,12 +51,15 @@ func NewRequestOptions(opts ...RequestOption) *RequestOptions {
 func (r *RequestOptions) ToHeader() http.Header {
 	header := r.cloneHeader()
 	if r.APIKey != "" {
-		header.Set("Authorization", fmt.Sprintf("%v", r.APIKey))
+		header.Set("Authorization", "Bearer "+r.APIKey)
 	}
 	return header
 }
 
 func (r *RequestOptions) cloneHeader() http.Header {
+	if r.HTTPHeader == nil {
+		return make(http.Header)
+	}
 	return r.HTTPHeader.Clone()
 }
 

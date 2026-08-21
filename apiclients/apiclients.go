@@ -11,6 +11,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 
 	generated "github.com/ChrisVerde02/ibmverify-go/generated"
 	"github.com/ChrisVerde02/ibmverify-go/generated/apiclients"
@@ -34,9 +35,12 @@ func (c *Client) newGenerated(ctx context.Context) (*apiclients.Client, error) {
 	if err != nil {
 		return nil, fmt.Errorf("apiclients: get token: %w", err)
 	}
+	h := make(http.Header)
+	h.Set("Accept", "application/json")
 	return apiclients.NewClient(&core.RequestOptions{
-		BaseURL: c.tenantURL,
-		APIKey:  token,
+		BaseURL:    c.tenantURL,
+		APIKey:     token,
+		HTTPHeader: h,
 	}), nil
 }
 

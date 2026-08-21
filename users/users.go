@@ -6,6 +6,7 @@ package users
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	generated "github.com/ChrisVerde02/ibmverify-go/generated"
 	"github.com/ChrisVerde02/ibmverify-go/generated/core"
@@ -29,9 +30,12 @@ func (c *Client) newGenerated(ctx context.Context) (*usersmanagementversion20.Cl
 	if err != nil {
 		return nil, fmt.Errorf("users: get token: %w", err)
 	}
+	h := make(http.Header)
+	h.Set("Accept", "application/json")
 	return usersmanagementversion20.NewClient(&core.RequestOptions{
-		BaseURL: c.tenantURL,
-		APIKey:  token,
+		BaseURL:    c.tenantURL,
+		APIKey:     token,
+		HTTPHeader: h,
 	}), nil
 }
 
