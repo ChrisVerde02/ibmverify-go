@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	generated "github.com/ChrisVerde02/ibmverify-go/generated"
 	"github.com/ChrisVerde02/ibmverify-go/generated/core"
@@ -81,9 +82,15 @@ func (c *Client) rawGet(ctx context.Context, path string) ([]byte, error) {
 	return body, nil
 }
 
-// List returns users as raw JSON maps. Pass nil for all users.
-func (c *Client) List(ctx context.Context, _ *generated.GetUsersRequest) ([]map[string]interface{}, error) {
-	body, err := c.rawGet(ctx, "/v2.0/Users")
+// List returns users as raw JSON maps.
+// Pass nil to return all users, or set req.Filter for a SCIM filter expression
+// (e.g. `userName eq "john"`).
+func (c *Client) List(ctx context.Context, req *generated.GetUsersRequest) ([]map[string]interface{}, error) {
+	path := "/v2.0/Users"
+	if req != nil && req.Filter != nil && *req.Filter != "" {
+		path += "?filter=" + url.QueryEscape(*req.Filter)
+	}
+	body, err := c.rawGet(ctx, path)
 	if err != nil {
 		return nil, fmt.Errorf("users: list: %w", err)
 	}
