@@ -1,0 +1,9 @@
+# Bob AI artifacts
+.bob/
+
+# Fern generation logs
+fern-output.log
+
+# Go build outputs
+*.test
+/dist/
