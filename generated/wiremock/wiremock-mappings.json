@@ -1,0 +1,502 @@
+{
+  "mappings": [
+    {
+      "id": "6d9471a4-6754-46ce-9f6b-3dc708713c21",
+      "name": "Retrieves a list of users that belong to a specified tenant and match the search filter criteria. - default",
+      "request": {
+        "urlPathTemplate": "/v2.0/Users",
+        "method": "GET"
+      },
+      "response": {
+        "status": 200,
+        "body": "{\n  \"schemas\": [\n    \"schemas\"\n  ],\n  \"totalResults\": 1,\n  \"startIndex\": 1,\n  \"itemsPerPage\": 1,\n  \"Resources\": [\n    {\n      \"schemas\": [\n        \"schemas\"\n      ],\n      \"id\": \"id\",\n      \"externalId\": \"externalId\",\n      \"userName\": \"userName\",\n      \"title\": \"title\",\n      \"name\": {},\n      \"displayName\": \"displayName\",\n      \"preferredLanguage\": \"preferredLanguage\",\n      \"active\": true,\n      \"emails\": [\n        {\n          \"value\": \"value\",\n          \"type\": \"work\"\n        }\n      ],\n      \"addresses\": [\n        {}\n      ],\n      \"phoneNumbers\": [\n        {\n          \"value\": \"value\",\n          \"type\": \"work\"\n        }\n      ]\n    }\n  ]\n}",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "uuid": "6d9471a4-6754-46ce-9f6b-3dc708713c21",
+      "persistent": true,
+      "priority": 3,
+      "metadata": {
+        "mocklab": {
+          "created": {
+            "at": "2020-01-01T00:00:00.000Z",
+            "via": "SYSTEM"
+          }
+        }
+      },
+      "postServeActions": []
+    },
+    {
+      "id": "fae1c4b2-1435-4b12-b293-69dfe9bc7193",
+      "name": "Creates a user in Cloud Directory. - default",
+      "request": {
+        "urlPathTemplate": "/v2.0/Users",
+        "method": "POST"
+      },
+      "response": {
+        "status": 201,
+        "body": "{\n  \"schemas\": [\n    \"schemas\"\n  ],\n  \"id\": \"id\",\n  \"externalId\": \"externalId\",\n  \"meta\": {\n    \"resourceType\": \"resourceType\",\n    \"created\": \"created\",\n    \"lastModified\": \"lastModified\",\n    \"location\": \"location\",\n    \"deactivated\": \"api\"\n  },\n  \"userName\": \"userName\",\n  \"title\": \"title\",\n  \"name\": {\n    \"formatted\": \"formatted\",\n    \"familyName\": \"familyName\",\n    \"givenName\": \"givenName\",\n    \"middleName\": \"middleName\"\n  },\n  \"displayName\": \"displayName\",\n  \"preferredLanguage\": \"preferredLanguage\",\n  \"active\": true,\n  \"emails\": [\n    {\n      \"value\": \"value\",\n      \"type\": \"work\"\n    }\n  ],\n  \"addresses\": [\n    {\n      \"locality\": \"locality\",\n      \"country\": \"country\",\n      \"type\": \"work\",\n      \"streetAddress\": \"streetAddress\",\n      \"postalCode\": \"postalCode\",\n      \"formatted\": \"formatted\",\n      \"primary\": true,\n      \"region\": \"region\"\n    }\n  ],\n  \"phoneNumbers\": [\n    {\n      \"value\": \"value\",\n      \"type\": \"work\"\n    }\n  ],\n  \"groups\": [\n    {\n      \"displayName\": \"displayName\",\n      \"id\": \"id\",\n      \"value\": \"value\",\n      \"$ref\": \"$ref\"\n    }\n  ],\n  \"urn:ietf:params:scim:schemas:extension:ibm:2.0:User\": {\n    \"userCategory\": \"regular\",\n    \"emailVerified\": \"emailVerified\",\n    \"realm\": \"realm\",\n    \"unqualifiedUserName\": \"unqualifiedUserName\",\n    \"twoFactorAuthentication\": true,\n    \"pwdReset\": true,\n    \"pwdChangedTime\": 1000000,\n    \"pwdAccountLockedTime\": \"pwdAccountLockedTime\",\n    \"pwdExpirationWarned\": \"pwdExpirationWarned\",\n    \"pwdFailureTime\": [\n      \"pwdFailureTime\"\n    ],\n    \"pwdGraceUseTime\": [\n      \"pwdGraceUseTime\"\n    ],\n    \"delegate\": \"delegate\",\n    \"customAttributes\": [\n      {\n        \"name\": \"name\",\n        \"values\": [\n          \"values\"\n        ]\n      }\n    ],\n    \"linkedAccounts\": [\n      {\n        \"externalId\": \"externalId\",\n        \"realm\": \"realm\"\n      }\n    ],\n    \"lastLogin\": \"lastLogin\",\n    \"lastLoginType\": \"lastLoginType\",\n    \"lastLoginRealm\": \"lastLoginRealm\",\n    \"lastMFA\": [\n      {\n        \"type\": \"type\",\n        \"value\": \"value\"\n      }\n    ],\n    \"accountExpires\": \"accountExpires\"\n  },\n  \"urn:ietf:params:scim:schemas:extension:enterprise:2.0:User\": {\n    \"department\": \"department\",\n    \"employeeNumber\": \"employeeNumber\",\n    \"manager\": {\n      \"value\": \"value\",\n      \"$ref\": \"$ref\",\n      \"displayName\": \"displayName\"\n    }\n  }\n}",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "uuid": "fae1c4b2-1435-4b12-b293-69dfe9bc7193",
+      "persistent": true,
+      "priority": 3,
+      "metadata": {
+        "mocklab": {
+          "created": {
+            "at": "2020-01-01T00:00:00.000Z",
+            "via": "SYSTEM"
+          }
+        }
+      }
+    },
+    {
+      "id": "27fbfb73-44e0-4ea3-9206-9ba10474ae6f",
+      "name": "Retrieves the details of a user in Cloud Directory for a tenant. - default",
+      "request": {
+        "urlPathTemplate": "/v2.0/Users/{id}",
+        "method": "GET",
+        "pathParameters": {
+          "id": {
+            "equalTo": "id"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": "{\n  \"schemas\": [\n    \"schemas\"\n  ],\n  \"id\": \"id\",\n  \"externalId\": \"externalId\",\n  \"meta\": {\n    \"resourceType\": \"resourceType\",\n    \"created\": \"created\",\n    \"lastModified\": \"lastModified\",\n    \"location\": \"location\",\n    \"deactivated\": \"api\"\n  },\n  \"userName\": \"userName\",\n  \"title\": \"title\",\n  \"name\": {\n    \"formatted\": \"formatted\",\n    \"familyName\": \"familyName\",\n    \"givenName\": \"givenName\",\n    \"middleName\": \"middleName\"\n  },\n  \"displayName\": \"displayName\",\n  \"preferredLanguage\": \"preferredLanguage\",\n  \"active\": true,\n  \"emails\": [\n    {\n      \"value\": \"value\",\n      \"type\": \"work\"\n    }\n  ],\n  \"addresses\": [\n    {\n      \"locality\": \"locality\",\n      \"country\": \"country\",\n      \"type\": \"work\",\n      \"streetAddress\": \"streetAddress\",\n      \"postalCode\": \"postalCode\",\n      \"formatted\": \"formatted\",\n      \"primary\": true,\n      \"region\": \"region\"\n    }\n  ],\n  \"phoneNumbers\": [\n    {\n      \"value\": \"value\",\n      \"type\": \"work\"\n    }\n  ],\n  \"groups\": [\n    {\n      \"displayName\": \"displayName\",\n      \"id\": \"id\",\n      \"value\": \"value\",\n      \"$ref\": \"$ref\"\n    }\n  ],\n  \"urn:ietf:params:scim:schemas:extension:ibm:2.0:User\": {\n    \"userCategory\": \"regular\",\n    \"emailVerified\": \"emailVerified\",\n    \"realm\": \"realm\",\n    \"unqualifiedUserName\": \"unqualifiedUserName\",\n    \"twoFactorAuthentication\": true,\n    \"pwdReset\": true,\n    \"pwdChangedTime\": 1000000,\n    \"pwdAccountLockedTime\": \"pwdAccountLockedTime\",\n    \"pwdExpirationWarned\": \"pwdExpirationWarned\",\n    \"pwdFailureTime\": [\n      \"pwdFailureTime\"\n    ],\n    \"pwdGraceUseTime\": [\n      \"pwdGraceUseTime\"\n    ],\n    \"delegate\": \"delegate\",\n    \"customAttributes\": [\n      {\n        \"name\": \"name\",\n        \"values\": [\n          \"values\"\n        ]\n      }\n    ],\n    \"linkedAccounts\": [\n      {\n        \"externalId\": \"externalId\",\n        \"realm\": \"realm\"\n      }\n    ],\n    \"lastLogin\": \"lastLogin\",\n    \"lastLoginType\": \"lastLoginType\",\n    \"lastLoginRealm\": \"lastLoginRealm\",\n    \"lastMFA\": [\n      {\n        \"type\": \"type\",\n        \"value\": \"value\"\n      }\n    ],\n    \"accountExpires\": \"accountExpires\"\n  },\n  \"urn:ietf:params:scim:schemas:extension:enterprise:2.0:User\": {\n    \"department\": \"department\",\n    \"employeeNumber\": \"employeeNumber\",\n    \"manager\": {\n      \"value\": \"value\",\n      \"$ref\": \"$ref\",\n      \"displayName\": \"displayName\"\n    }\n  }\n}",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "uuid": "27fbfb73-44e0-4ea3-9206-9ba10474ae6f",
+      "persistent": true,
+      "priority": 3,
+      "metadata": {
+        "mocklab": {
+          "created": {
+            "at": "2020-01-01T00:00:00.000Z",
+            "via": "SYSTEM"
+          }
+        }
+      }
+    },
+    {
+      "id": "6d198fdb-91ee-40f3-93bd-2df64e19aa75",
+      "name": "Replaces the user's attributes in Cloud Directory. - default",
+      "request": {
+        "urlPathTemplate": "/v2.0/Users/{id}",
+        "method": "PUT",
+        "pathParameters": {
+          "id": {
+            "equalTo": "id"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": "{\n  \"schemas\": [\n    \"schemas\"\n  ],\n  \"id\": \"id\",\n  \"externalId\": \"externalId\",\n  \"meta\": {\n    \"resourceType\": \"resourceType\",\n    \"created\": \"created\",\n    \"lastModified\": \"lastModified\",\n    \"location\": \"location\",\n    \"deactivated\": \"api\"\n  },\n  \"userName\": \"userName\",\n  \"title\": \"title\",\n  \"name\": {\n    \"formatted\": \"formatted\",\n    \"familyName\": \"familyName\",\n    \"givenName\": \"givenName\",\n    \"middleName\": \"middleName\"\n  },\n  \"displayName\": \"displayName\",\n  \"preferredLanguage\": \"preferredLanguage\",\n  \"active\": true,\n  \"emails\": [\n    {\n      \"value\": \"value\",\n      \"type\": \"work\"\n    }\n  ],\n  \"addresses\": [\n    {\n      \"locality\": \"locality\",\n      \"country\": \"country\",\n      \"type\": \"work\",\n      \"streetAddress\": \"streetAddress\",\n      \"postalCode\": \"postalCode\",\n      \"formatted\": \"formatted\",\n      \"primary\": true,\n      \"region\": \"region\"\n    }\n  ],\n  \"phoneNumbers\": [\n    {\n      \"value\": \"value\",\n      \"type\": \"work\"\n    }\n  ],\n  \"groups\": [\n    {\n      \"displayName\": \"displayName\",\n      \"id\": \"id\",\n      \"value\": \"value\",\n      \"$ref\": \"$ref\"\n    }\n  ],\n  \"urn:ietf:params:scim:schemas:extension:ibm:2.0:User\": {\n    \"userCategory\": \"regular\",\n    \"emailVerified\": \"emailVerified\",\n    \"realm\": \"realm\",\n    \"unqualifiedUserName\": \"unqualifiedUserName\",\n    \"twoFactorAuthentication\": true,\n    \"pwdReset\": true,\n    \"pwdChangedTime\": 1000000,\n    \"pwdAccountLockedTime\": \"pwdAccountLockedTime\",\n    \"pwdExpirationWarned\": \"pwdExpirationWarned\",\n    \"pwdFailureTime\": [\n      \"pwdFailureTime\"\n    ],\n    \"pwdGraceUseTime\": [\n      \"pwdGraceUseTime\"\n    ],\n    \"delegate\": \"delegate\",\n    \"customAttributes\": [\n      {\n        \"name\": \"name\",\n        \"values\": [\n          \"values\"\n        ]\n      }\n    ],\n    \"linkedAccounts\": [\n      {\n        \"externalId\": \"externalId\",\n        \"realm\": \"realm\"\n      }\n    ],\n    \"lastLogin\": \"lastLogin\",\n    \"lastLoginType\": \"lastLoginType\",\n    \"lastLoginRealm\": \"lastLoginRealm\",\n    \"lastMFA\": [\n      {\n        \"type\": \"type\",\n        \"value\": \"value\"\n      }\n    ],\n    \"accountExpires\": \"accountExpires\"\n  },\n  \"urn:ietf:params:scim:schemas:extension:enterprise:2.0:User\": {\n    \"department\": \"department\",\n    \"employeeNumber\": \"employeeNumber\",\n    \"manager\": {\n      \"value\": \"value\",\n      \"$ref\": \"$ref\",\n      \"displayName\": \"displayName\"\n    }\n  }\n}",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "uuid": "6d198fdb-91ee-40f3-93bd-2df64e19aa75",
+      "persistent": true,
+      "priority": 3,
+      "metadata": {
+        "mocklab": {
+          "created": {
+            "at": "2020-01-01T00:00:00.000Z",
+            "via": "SYSTEM"
+          }
+        }
+      }
+    },
+    {
+      "id": "971a448a-bf1e-4745-9977-77f33866ff23",
+      "name": "Deletes a user from a specified tenant in Cloud Directory. - default",
+      "request": {
+        "urlPathTemplate": "/v2.0/Users/{id}",
+        "method": "DELETE",
+        "pathParameters": {
+          "id": {
+            "equalTo": "id"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": "\"\"",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "uuid": "971a448a-bf1e-4745-9977-77f33866ff23",
+      "persistent": true,
+      "priority": 3,
+      "metadata": {
+        "mocklab": {
+          "created": {
+            "at": "2020-01-01T00:00:00.000Z",
+            "via": "SYSTEM"
+          }
+        }
+      }
+    },
+    {
+      "id": "60a29286-0ad8-4d3b-b505-b8b4fef7d20b",
+      "name": "Modify a user's attributes in Cloud Directory.  It can be used to update one or more attributes. - default",
+      "request": {
+        "urlPathTemplate": "/v2.0/Users/{id}",
+        "method": "PATCH",
+        "pathParameters": {
+          "id": {
+            "equalTo": "id"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": "\"\"",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "uuid": "60a29286-0ad8-4d3b-b505-b8b4fef7d20b",
+      "persistent": true,
+      "priority": 3,
+      "metadata": {
+        "mocklab": {
+          "created": {
+            "at": "2020-01-01T00:00:00.000Z",
+            "via": "SYSTEM"
+          }
+        }
+      }
+    },
+    {
+      "id": "29664304-195b-4972-8cde-a5b6b881bf8a",
+      "name": "Gets the details of an application. - default",
+      "request": {
+        "urlPathTemplate": "/v1.0/applications/{applicationId}",
+        "method": "GET",
+        "pathParameters": {
+          "applicationId": {
+            "equalTo": "applicationId"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": "{\n  \"_links\": {\n    \"self\": {\n      \"href\": \"href\"\n    }\n  },\n  \"name\": \"name\",\n  \"owners\": [\n    {\n      \"id\": \"id\",\n      \"name\": \"name\",\n      \"email\": \"email\",\n      \"userName\": \"userName\",\n      \"realm\": \"realm\",\n      \"userType\": \"userType\",\n      \"familyName\": \"familyName\",\n      \"givenName\": \"givenName\"\n    }\n  ],\n  \"target\": [\n    {\n      \"key\": \"value\"\n    }\n  ],\n  \"icon\": \"icon\",\n  \"defaultIcon\": \"defaultIcon\",\n  \"customIcon\": \"customIcon\",\n  \"xforce\": {\n    \"key\": {}\n  },\n  \"type\": \"type\",\n  \"templateId\": \"templateId\",\n  \"providers\": {\n    \"saml\": {\n      \"justInTimeProvisioning\": \"justInTimeProvisioning\",\n      \"properties\": {\n        \"providerId\": \"providerId\",\n        \"assertionConsumerServiceUrl\": \"assertionConsumerServiceUrl\"\n      },\n      \"assertionConsumerService\": [\n        {\n          \"index\": 1,\n          \"url\": \"url\"\n        }\n      ],\n      \"manageNameIDService\": {\n        \"url\": \"url\"\n      },\n      \"singleLogoutService\": [\n        {\n          \"binding\": \"binding\",\n          \"url\": \"url\"\n        }\n      ],\n      \"additionalProperties\": [\n        {}\n      ]\n    },\n    \"sso\": {\n      \"domainName\": \"domainName\",\n      \"spssoUrl\": \"spssoUrl\",\n      \"targetUrl\": \"targetUrl\",\n      \"idpInitiatedSSOSupport\": \"idpInitiatedSSOSupport\",\n      \"userOptions\": \"userOptions\"\n    },\n    \"bookmark\": {\n      \"bookmarkUrl\": \"bookmarkUrl\"\n    },\n    \"oidc\": {\n      \"applicationUrl\": \"applicationUrl\",\n      \"restrictScopes\": \"restrictScopes\",\n      \"scopes\": [\n        {}\n      ],\n      \"entitlements\": [\n        \"entitlements\"\n      ],\n      \"restrictEntitlements\": true,\n      \"token\": {\n        \"accessTokenType\": \"default\"\n      },\n      \"consentAction\": \"never_prompt\",\n      \"requirePkceVerification\": \"false\"\n    },\n    \"wsfed\": {\n      \"properties\": {\n        \"additionalProperties\": [\n          {}\n        ]\n      }\n    }\n  },\n  \"attributeMappings\": [\n    {\n      \"name\": \"name\",\n      \"targetName\": \"targetName\",\n      \"targetAttrFormat\": \"targetAttrFormat\",\n      \"sourceId\": \"sourceId\"\n    }\n  ],\n  \"applicationState\": true,\n  \"description\": \"description\",\n  \"authPolicy\": {\n    \"id\": \"id\",\n    \"name\": \"Applicable only for GET endpoint calls.\",\n    \"grantTypes\": [\n      {\n        \"key\": true\n      }\n    ],\n    \"errorCode\": \"errorCode\",\n    \"errorDescription\": \"errorDescription\"\n  },\n  \"provisioningMode\": \"provisioningMode\",\n  \"identitySources\": [\n    \"identitySources\"\n  ],\n  \"visibleOnLaunchpad\": true,\n  \"provisioning\": {\n    \"authentication\": {\n      \"properties\": {\n        \"key\": \"value\"\n      }\n    },\n    \"attributeMappings\": [\n      {}\n    ],\n    \"reverseAttributeMappings\": [\n      {}\n    ],\n    \"policies\": {\n      \"provPolicy\": \"provPolicy\",\n      \"deProvPolicy\": \"deProvPolicy\",\n      \"deProvAction\": \"deProvAction\",\n      \"passwordSync\": \"passwordSync\",\n      \"gracePeriod\": 1000000\n    },\n    \"extension\": {\n      \"properties\": {\n        \"key\": {}\n      }\n    },\n    \"provisioningState\": \"provisioningState\"\n  },\n  \"customization\": {\n    \"themeId\": \"themeId\"\n  },\n  \"devportalSettings\": {\n    \"grantTypes\": {\n      \"authorizationCode\": \"true\",\n      \"implicit\": \"true\",\n      \"deviceFlow\": \"true\",\n      \"ropc\": \"true\",\n      \"jwtBearer\": \"true\",\n      \"policyAuth\": \"true\",\n      \"clientCredentials\": \"true\",\n      \"tokenExchange\": \"true\"\n    },\n    \"identitySources\": [\n      \"identitySources\"\n    ],\n    \"authPolicy\": {\n      \"id\": \"id\",\n      \"name\": \"Applicable only for GET endpoint calls.\",\n      \"grantTypes\": [\n        {\n          \"key\": true\n        }\n      ],\n      \"errorCode\": \"errorCode\",\n      \"errorDescription\": \"errorDescription\"\n    },\n    \"sendAllKnownUserAttributes\": \"sendAllKnownUserAttributes\",\n    \"attributeMappings\": [\n      {\n        \"name\": \"name\",\n        \"targetName\": \"targetName\"\n      }\n    ],\n    \"extendedProperties\": {\n      \"key\": \"value\"\n    }\n  },\n  \"apiAccessClients\": [\n    {\n      \"clientName\": \"clientName\",\n      \"clientId\": \"clientId\",\n      \"clientSecret\": \"clientSecret\",\n      \"enabled\": true,\n      \"defaultEntitlements\": [\n        \"defaultEntitlements\"\n      ],\n      \"accessTokenType\": \"default\",\n      \"jwtSigningAlg\": \"jwtSigningAlg\",\n      \"signKeyLabel\": \"signKeyLabel\",\n      \"accessTokenLifetime\": 1,\n      \"restrictScopes\": true,\n      \"ipFilterOp\": \"ipFilterOp\",\n      \"ipFilters\": [\n        \"ipFilters\"\n      ],\n      \"scopes\": [\n        {}\n      ],\n      \"jwkUri\": \"jwkUri\",\n      \"additionalConfig\": {\n        \"key\": {}\n      }\n    }\n  ],\n  \"adaptiveAuthentication\": {\n    \"platform\": \"platform\",\n    \"licenseData\": \"licenseData\",\n    \"storageLink\": \"storageLink\"\n  }\n}",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "uuid": "29664304-195b-4972-8cde-a5b6b881bf8a",
+      "persistent": true,
+      "priority": 3,
+      "metadata": {
+        "mocklab": {
+          "created": {
+            "at": "2020-01-01T00:00:00.000Z",
+            "via": "SYSTEM"
+          }
+        }
+      }
+    },
+    {
+      "id": "afa463c9-e04c-4803-abe6-13c140b9f292",
+      "name": "Updates an application. - default",
+      "request": {
+        "urlPathTemplate": "/v1.0/applications/{applicationId}",
+        "method": "PUT",
+        "pathParameters": {
+          "applicationId": {
+            "equalTo": "applicationId"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": "\"\"",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "uuid": "afa463c9-e04c-4803-abe6-13c140b9f292",
+      "persistent": true,
+      "priority": 3,
+      "metadata": {
+        "mocklab": {
+          "created": {
+            "at": "2020-01-01T00:00:00.000Z",
+            "via": "SYSTEM"
+          }
+        }
+      }
+    },
+    {
+      "id": "e6c07ad3-c276-4feb-bd35-e9b1fcfae63f",
+      "name": "Deletes the application that is specified by the application ID. - default",
+      "request": {
+        "urlPathTemplate": "/v1.0/applications/{applicationId}",
+        "method": "DELETE",
+        "pathParameters": {
+          "applicationId": {
+            "equalTo": "applicationId"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": "\"\"",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "uuid": "e6c07ad3-c276-4feb-bd35-e9b1fcfae63f",
+      "persistent": true,
+      "priority": 3,
+      "metadata": {
+        "mocklab": {
+          "created": {
+            "at": "2020-01-01T00:00:00.000Z",
+            "via": "SYSTEM"
+          }
+        }
+      }
+    },
+    {
+      "id": "9cc1582f-46ac-4356-b34b-e7e45f268901",
+      "name": "Gets the list of all applications that were onboarded  by tenant administrator. A maximum of 500 applications are returned. Use pagination to fetch the next set of applications. - default",
+      "request": {
+        "urlPathTemplate": "/v1.0/applications",
+        "method": "GET"
+      },
+      "response": {
+        "status": 200,
+        "body": "{\n  \"_embedded\": {\n    \"totalCount\": 1,\n    \"applications\": [\n      {\n        \"name\": \"name\",\n        \"icon\": \"icon\",\n        \"defaultIcon\": \"defaultIcon\",\n        \"customIcon\": \"customIcon\",\n        \"templateId\": \"templateId\",\n        \"applicationState\": \"applicationState\",\n        \"description\": \"description\",\n        \"provisioningMode\": \"provisioningMode\",\n        \"type\": \"type\",\n        \"visibleOnLaunchpad\": \"visibleOnLaunchpad\",\n        \"approvalRequired\": \"approvalRequired\",\n        \"providers\": {\n          \"key\": {}\n        },\n        \"provisioning\": {}\n      }\n    ]\n  },\n  \"_links\": {\n    \"self\": {\n      \"href\": \"href\"\n    }\n  },\n  \"totalCount\": 1\n}",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "uuid": "9cc1582f-46ac-4356-b34b-e7e45f268901",
+      "persistent": true,
+      "priority": 3,
+      "metadata": {
+        "mocklab": {
+          "created": {
+            "at": "2020-01-01T00:00:00.000Z",
+            "via": "SYSTEM"
+          }
+        }
+      },
+      "postServeActions": []
+    },
+    {
+      "id": "5954d71e-a7c0-47df-9f64-ec603724a9c8",
+      "name": "Creates an instance of an application for a tenant.  - default",
+      "request": {
+        "urlPathTemplate": "/v1.0/applications",
+        "method": "POST"
+      },
+      "response": {
+        "status": 201,
+        "body": "{\n  \"_links\": {\n    \"self\": {\n      \"href\": \"href\",\n      \"title\": \"title\",\n      \"reconciliationId\": \"reconciliationId\"\n    }\n  }\n}",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "uuid": "5954d71e-a7c0-47df-9f64-ec603724a9c8",
+      "persistent": true,
+      "priority": 3,
+      "metadata": {
+        "mocklab": {
+          "created": {
+            "at": "2020-01-01T00:00:00.000Z",
+            "via": "SYSTEM"
+          }
+        }
+      }
+    },
+    {
+      "id": "053d2bcc-e267-492a-9b24-d566a779e61e",
+      "name": "Gets a specific API client - default",
+      "request": {
+        "urlPathTemplate": "/v1.0/apiclients/{clientId}",
+        "method": "GET",
+        "pathParameters": {
+          "clientId": {
+            "equalTo": "clientId"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": "\"\"",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "uuid": "053d2bcc-e267-492a-9b24-d566a779e61e",
+      "persistent": true,
+      "priority": 3,
+      "metadata": {
+        "mocklab": {
+          "created": {
+            "at": "2020-01-01T00:00:00.000Z",
+            "via": "SYSTEM"
+          }
+        }
+      }
+    },
+    {
+      "id": "441b9189-e206-465f-ba07-c4c856438399",
+      "name": "Updates a specific API client - default",
+      "request": {
+        "urlPathTemplate": "/v1.0/apiclients/{clientIdPathParam}",
+        "method": "PUT",
+        "pathParameters": {
+          "clientIdPathParam": {
+            "equalTo": "clientId"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": "\"\"",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "uuid": "441b9189-e206-465f-ba07-c4c856438399",
+      "persistent": true,
+      "priority": 3,
+      "metadata": {
+        "mocklab": {
+          "created": {
+            "at": "2020-01-01T00:00:00.000Z",
+            "via": "SYSTEM"
+          }
+        }
+      }
+    },
+    {
+      "id": "fc75fbdc-b6eb-468f-ab00-5a9d9dd1abc3",
+      "name": "Deletes an API client - default",
+      "request": {
+        "urlPathTemplate": "/v1.0/apiclients/{clientId}",
+        "method": "DELETE",
+        "pathParameters": {
+          "clientId": {
+            "equalTo": "clientId"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": "\"\"",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "uuid": "fc75fbdc-b6eb-468f-ab00-5a9d9dd1abc3",
+      "persistent": true,
+      "priority": 3,
+      "metadata": {
+        "mocklab": {
+          "created": {
+            "at": "2020-01-01T00:00:00.000Z",
+            "via": "SYSTEM"
+          }
+        }
+      }
+    },
+    {
+      "id": "11ad0296-cfe2-471f-811c-339e18507406",
+      "name": "Lists the API Clients - default",
+      "request": {
+        "urlPathTemplate": "/v1.0/apiclients",
+        "method": "GET"
+      },
+      "response": {
+        "status": 200,
+        "body": "\"\"",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "uuid": "11ad0296-cfe2-471f-811c-339e18507406",
+      "persistent": true,
+      "priority": 3,
+      "metadata": {
+        "mocklab": {
+          "created": {
+            "at": "2020-01-01T00:00:00.000Z",
+            "via": "SYSTEM"
+          }
+        }
+      },
+      "postServeActions": []
+    },
+    {
+      "id": "33b0e12d-1079-41f2-8264-64f0136b4380",
+      "name": "Create an API Client - default",
+      "request": {
+        "urlPathTemplate": "/v1.0/apiclients",
+        "method": "POST"
+      },
+      "response": {
+        "status": 200,
+        "body": "\"\"",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "uuid": "33b0e12d-1079-41f2-8264-64f0136b4380",
+      "persistent": true,
+      "priority": 3,
+      "metadata": {
+        "mocklab": {
+          "created": {
+            "at": "2020-01-01T00:00:00.000Z",
+            "via": "SYSTEM"
+          }
+        }
+      }
+    },
+    {
+      "id": "7365d3f8-e774-47f4-8ae8-406a700d7161",
+      "name": "Bulk deletes the API clients - default",
+      "request": {
+        "urlPathTemplate": "/v1.0/apiclients",
+        "method": "PATCH"
+      },
+      "response": {
+        "status": 200,
+        "body": "\"\"",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "uuid": "7365d3f8-e774-47f4-8ae8-406a700d7161",
+      "persistent": true,
+      "priority": 3,
+      "metadata": {
+        "mocklab": {
+          "created": {
+            "at": "2020-01-01T00:00:00.000Z",
+            "via": "SYSTEM"
+          }
+        }
+      }
+    }
+  ],
+  "meta": {
+    "total": 17
+  }
+}

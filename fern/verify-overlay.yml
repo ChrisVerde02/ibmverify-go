@@ -1,0 +1,83 @@
+overlay: 1.0.0
+info:
+  title: IBM Verify SDK Overlay
+  version: 1.0.0
+
+actions:
+  # ── Applications ────────────────────────────────────────────────────────────
+  - target: "$.paths['/v1.0/applications'].get"
+    update:
+      x-fern-sdk-group-name: applications
+      x-fern-sdk-method-name: list
+
+  - target: "$.paths['/v1.0/applications'].post"
+    update:
+      x-fern-sdk-group-name: applications
+      x-fern-sdk-method-name: create
+
+  - target: "$.paths['/v1.0/applications/{applicationId}'].get"
+    update:
+      x-fern-sdk-group-name: applications
+      x-fern-sdk-method-name: get
+
+  - target: "$.paths['/v1.0/applications/{applicationId}'].put"
+    update:
+      x-fern-sdk-group-name: applications
+      x-fern-sdk-method-name: update
+
+  - target: "$.paths['/v1.0/applications/{applicationId}'].delete"
+    update:
+      x-fern-sdk-group-name: applications
+      x-fern-sdk-method-name: delete
+
+  # ── Users ────────────────────────────────────────────────────────────────────
+  - target: "$.paths['/v2.0/Users'].get"
+    update:
+      x-fern-sdk-group-name: users
+      x-fern-sdk-method-name: list
+
+  - target: "$.paths['/v2.0/Users'].post"
+    update:
+      x-fern-sdk-group-name: users
+      x-fern-sdk-method-name: create
+
+  - target: "$.paths['/v2.0/Users/{id}'].get"
+    update:
+      x-fern-sdk-group-name: users
+      x-fern-sdk-method-name: get
+
+  - target: "$.paths['/v2.0/Users/{id}'].put"
+    update:
+      x-fern-sdk-group-name: users
+      x-fern-sdk-method-name: update
+
+  - target: "$.paths['/v2.0/Users/{id}'].delete"
+    update:
+      x-fern-sdk-group-name: users
+      x-fern-sdk-method-name: delete
+
+  # ── Dynamic Client Registration (API Clients) ─────────────────────────────
+  - target: "$.paths['/v1.0/apiclients'].get"
+    update:
+      x-fern-sdk-group-name: apiclients
+      x-fern-sdk-method-name: list
+
+  - target: "$.paths['/v1.0/apiclients'].post"
+    update:
+      x-fern-sdk-group-name: apiclients
+      x-fern-sdk-method-name: create
+
+  - target: "$.paths['/v1.0/apiclients/{clientId}'].get"
+    update:
+      x-fern-sdk-group-name: apiclients
+      x-fern-sdk-method-name: get
+
+  - target: "$.paths['/v1.0/apiclients/{clientId}'].put"
+    update:
+      x-fern-sdk-group-name: apiclients
+      x-fern-sdk-method-name: update
+
+  - target: "$.paths['/v1.0/apiclients/{clientId}'].delete"
+    update:
+      x-fern-sdk-group-name: apiclients
+      x-fern-sdk-method-name: delete

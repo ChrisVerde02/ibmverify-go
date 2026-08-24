@@ -7,13 +7,19 @@
 //	)
 //	token, err := c.Token.ClientCredentials(ctx)
 //	cert,  err := c.Certs.Get(ctx, "demotokensigner")
+//	apps,  err := c.Apps.List(ctx, nil)
 package client
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/ChrisVerde02/ibmverify-go/apiclients"
+	"github.com/ChrisVerde02/ibmverify-go/apps"
+	"github.com/ChrisVerde02/ibmverify-go/users"
 )
 
 const defaultTimeout = 30 * time.Second
@@ -31,6 +37,12 @@ type Client struct {
 	Token *TokenClient
 	// Certs provides methods for signer certificate management.
 	Certs *CertsClient
+	// Apps provides methods for IBM Verify application management.
+	Apps *apps.Client
+	// Users provides methods for IBM Verify user management (SCIM v2).
+	Users *users.Client
+	// APIClients provides methods for dynamic client registration.
+	APIClients *apiclients.Client
 }
 
 // Option configures a Client.
@@ -80,6 +92,18 @@ func New(tenantURL string, opts ...Option) (*Client, error) {
 	// Attach domain clients — they share the same http.Client and base URL.
 	c.Token = &TokenClient{c: c}
 	c.Certs = &CertsClient{c: c}
+
+	// Generated domain clients use the token client for auth.
+	getToken := func(ctx context.Context) (string, error) {
+		t, err := c.Token.ClientCredentials(ctx)
+		if err != nil {
+			return "", err
+		}
+		return t.AccessToken, nil
+	}
+	c.Apps = apps.New(c.tenantURL, getToken)
+	c.Users = users.New(c.tenantURL, getToken)
+	c.APIClients = apiclients.New(c.tenantURL, getToken)
 
 	return c, nil
 }

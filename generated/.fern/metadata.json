@@ -1,0 +1,14 @@
+{
+  "cliVersion": "5.98.2",
+  "generatorName": "fernapi/fern-go-sdk",
+  "generatorVersion": "1.57.2",
+  "generatorConfig": {
+    "module": {
+      "path": "github.com/ChrisVerde02/ibmverify-go/generated"
+    },
+    "packageName": "generated"
+  },
+  "originGitCommit": "479127f3e4572cdabf76d3da312bb9b3130c7478",
+  "originGitCommitIsDirty": true,
+  "invokedBy": "manual"
+}

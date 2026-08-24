@@ -1,26 +1,6 @@
 # ibmverify-go
 
-Go SDK for [IBM Verify](https://www.ibm.com/products/verify-identity). Provides typed functions for the IBM Verify OAuth 2.0 APIs — used by [`ibmverify-cli`](https://github.com/ChrisVerde02/ibmverify-cli) and [`terraform-provider-verify`](https://github.com/ChrisVerde02/terraform-provider-verify).
-
-## Packages
-
-### `client` — IBM Verify API calls
-
-| Function | Description |
-|---|---|
-| `GetClientCredentialsToken` | `POST /v1.0/endpoint/default/token` — client credentials grant |
-| `ExchangeToken` | `POST /oauth2/token` — RFC 8693 token exchange |
-| `IntrospectToken` | `POST /oauth2/introspect` — token introspection |
-| `ImportSignerCert` | `POST /v1.0/signercert` — upload a signer certificate |
-| `GetSignerCert` | `GET /v1.0/signercert/{label}` — read a signer certificate |
-| `DeleteSignerCert` | `DELETE /v1.0/signercert/{label}` — delete a signer certificate |
-
-### `crypto` — local cryptography
-
-| Function | Description |
-|---|---|
-| `GenerateSelfSignedCertificate` | Generates an RSA key pair and self-signed X.509 certificate |
-| `GenerateSignedJWT` | Signs an RS256 JWT using an RSA private key |
+Go SDK for [IBM Verify](https://www.ibm.com/products/verify-identity). Provides typed clients for IBM Verify APIs — used by [`ibmverify-cli`](https://github.com/ChrisVerde02/ibmverify-cli) and [`terraform-provider-verify`](https://github.com/ChrisVerde02/terraform-provider-verify).
 
 ## Installation
 
@@ -28,90 +8,185 @@ Go SDK for [IBM Verify](https://www.ibm.com/products/verify-identity). Provides 
 go get github.com/ChrisVerde02/ibmverify-go
 ```
 
-## Usage
+## Architecture
 
-### Client credentials token
+```
+IBM Verify OpenAPI spec
+        ↓  specs/sanitize.sh → openapi_corrected.yaml
+        ↓  fern generate     → generated/
+        
+ibmverify-go
+├── client/       ← handwritten: auth, certs, error handling, retry
+├── crypto/       ← handwritten: JWT signing, x509 certificate generation
+└── generated/    ← Fern auto-generated: Applications, Users, API Clients
+        ↑                   ↑
+  ibmverify-cli     terraform-provider-verify
+  (Cobra CLI)        (Terraform provider)
+```
+
+The rule: all IBM Verify HTTP calls live in this repo. The CLI and provider contain only Cobra/Terraform wiring.
+
+---
+
+## Packages
+
+### `client` — Authentication and certificate management
+
+Create a client once, reuse it across all operations:
 
 ```go
 import "github.com/ChrisVerde02/ibmverify-go/client"
 
-result, err := client.GetClientCredentialsToken(ctx, client.ClientCredentialsRequest{
-    TenantURL:    "https://example.verify.ibm.com",
-    ClientID:     "your-client-id",
-    ClientSecret: "your-client-secret",
-})
-// result.AccessToken, result.ExpiresIn, result.TokenType, result.Scope
+c := client.New("https://example.verify.ibm.com",
+    client.WithClientCredentials("your-client-id", "your-client-secret"),
+)
 ```
 
-### Token exchange
+| Domain | Method | Description |
+|---|---|---|
+| **Token** | `c.Token.ClientCredentials(ctx)` | Client credentials grant |
+| **Token** | `c.Token.Exchange(ctx, jwt)` | RFC 8693 token exchange |
+| **Token** | `c.Token.Introspect(ctx, token)` | Token introspection |
+| **Certs** | `c.Certs.Import(ctx, label, pem)` | Upload a signer certificate |
+| **Certs** | `c.Certs.Get(ctx, label)` | Read a signer certificate |
+| **Certs** | `c.Certs.Delete(ctx, label)` | Delete a signer certificate |
+
+All methods return typed `*APIError` on failure — use `errors.As` or the helper predicates:
 
 ```go
-result, err := client.ExchangeToken(ctx, client.TokenExchangeRequest{
-    TenantURL:        "https://example.verify.ibm.com",
-    ClientID:         "your-sts-client-id",
-    ClientSecret:     "your-sts-client-secret",
-    SubjectToken:     signedJWT,
-    SubjectTokenType: "urn:ietf:params:oauth:token-type:jwt",
-})
-// result.AccessToken
+var apiErr *client.APIError
+if errors.As(err, &apiErr) {
+    apiErr.IsNotFound()   // HTTP 404
+    apiErr.IsAuth()       // HTTP 401/403
+    apiErr.IsRateLimit()  // HTTP 429
+    apiErr.IsRetryable()  // 429 or 5xx — automatically retried by the SDK
+}
+
+// Sentinel for not-found checks without inspecting the full error
+if errors.Is(err, client.ErrNotFound) { ... }
 ```
 
-### Token introspection
+The SDK automatically retries `429` and `5xx` responses up to 3 times with exponential backoff (1s, 2s).
 
-```go
-result, err := client.IntrospectToken(ctx, client.IntrospectionRequest{
-    TenantURL:    "https://example.verify.ibm.com",
-    ClientID:     "your-client-id",
-    ClientSecret: "your-client-secret",
-    Token:        accessToken,
-})
-// result.Active, result.Subject, result.Username, result.ExpiresAt
-```
+---
 
-### Generate a self-signed certificate
+### `crypto` — Local cryptography
 
 ```go
 import "github.com/ChrisVerde02/ibmverify-go/crypto"
+```
 
+| Function | Description |
+|---|---|
+| `crypto.GenerateSelfSignedCertificate(req)` | Generates an RSA key pair and self-signed X.509 certificate |
+| `crypto.GenerateSignedJWT(req)` | Signs an RS256 JWT using an RSA private key |
+
+#### Generate a self-signed certificate
+
+```go
 cert, err := crypto.GenerateSelfSignedCertificate(crypto.CertificateRequest{
     CommonName:   "DemoTokenSigner",
     Organization: "IBM",
     Country:      "US",
     ValidityDays: 365,
-    KeySize:      4096, // 2048, 3072, or 4096
+    KeySize:      4096,
 })
 // cert.CertificatePEM, cert.PrivateKeyPEM
 ```
 
-### Sign a JWT
+#### Sign a JWT
 
 ```go
 result, err := crypto.GenerateSignedJWT(crypto.JWTRequest{
-    Issuer:        "https://demo.ibm.com",
+    Issuer:        "https://example.ibm.com",
     Subject:       "username",
-    KeyID:         "DemoTokenSigner",
-    JWTID:         "unique-id",
+    KeyID:         "demotokensigner",
     PrivateKeyPEM: cert.PrivateKeyPEM,
     ExpiresIn:     15 * time.Minute,
 })
 // result.Token
 ```
 
-## Architecture
+---
 
-```
-ibmverify-go       ← this repo — all IBM Verify HTTP calls live here
-    ↑                   ↑
-ibmverify-cli      terraform-provider-verify
-(Cobra CLI)        (Terraform provider)
+### `generated` — Fern auto-generated API clients
+
+Auto-generated from IBM Verify's OpenAPI spec via [Fern](https://buildwithfern.com). Covers the three primary management domains:
+
+| Package | Domain | Methods |
+|---|---|---|
+| `generated/applicationaccess` | Applications | `SearchApplications`, `CreateApplication`, `GetApplication`, `UpdateApplication`, `DeleteApplication` |
+| `generated/usersmanagementversion20` | Users (SCIM v2) | `GetUsers`, `CreateUser`, `GetUser0`, `PutUser0`, `DeleteUser0`, `PatchUser` |
+| `generated/apiclients` | API Clients (DCR) | `GetAPIClients`, `CreateAPIClient`, `GetAPIClient`, `UpdateAPIClient`, `DeleteAPIClient`, `BulkDeleteAPIClient` |
+
+> **Do not edit files in `generated/` by hand.** They are regenerated by running `fern generate --group go-sdk` from the repo root.
+
+To regenerate after a spec update:
+
+```bash
+# 1. Sanitize the raw IBM Verify spec
+./specs/sanitize.sh
+
+# 2. Regenerate (requires Docker and Fern CLI)
+fern generate --group go-sdk
 ```
 
-The rule: if it makes an HTTP call to IBM Verify, it belongs in this repo. The CLI and provider contain only Cobra/Terraform wiring.
+---
+
+## Usage examples
+
+### Full token exchange flow
+
+```go
+c := client.New("https://example.verify.ibm.com",
+    client.WithClientCredentials("client-id", "client-secret"),
+)
+
+// Get a signer cert from IBM Verify
+cert, err := c.Certs.Get(ctx, "demotokensigner")
+if err != nil {
+    log.Fatal(err)
+}
+
+// Sign a JWT locally
+jwt, err := crypto.GenerateSignedJWT(crypto.JWTRequest{
+    Issuer:        "https://example.ibm.com",
+    Subject:       "user@example.com",
+    KeyID:         "demotokensigner",
+    PrivateKeyPEM: cert.PrivateKeyPEM,
+    ExpiresIn:     15 * time.Minute,
+})
+
+// Exchange the JWT for an IBM Verify access token
+token, err := c.Token.Exchange(ctx, jwt.Token)
+fmt.Println(token.AccessToken)
+```
+
+### List IBM Verify applications
+
+```go
+import (
+    "github.com/ChrisVerde02/ibmverify-go/generated/applicationaccess"
+    "github.com/ChrisVerde02/ibmverify-go/generated/option"
+)
+
+appsClient := applicationaccess.NewClient(
+    option.WithBaseURL("https://example.verify.ibm.com"),
+    option.WithAPIKey(token.AccessToken),
+)
+
+apps, err := appsClient.SearchApplications(ctx, &generated.SearchApplicationsRequest{})
+```
+
+---
 
 ## Requirements
 
-- Go 1.21+
+- Go 1.23+
+- [Fern CLI](https://buildwithfern.com) + Docker (only needed to regenerate `generated/`)
 
 ## Versioning
 
-This module follows [semantic versioning](https://semver.org). Current version: **v1.4.0**
+Follows [semantic versioning](https://semver.org). Current version: **v1.5.3**
+
+Breaking changes to the `client/` or `crypto/` packages increment the major version. Changes to `generated/` alone increment the minor version.
