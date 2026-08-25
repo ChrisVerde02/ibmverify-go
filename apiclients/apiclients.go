@@ -15,6 +15,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 
 	generated "github.com/ChrisVerde02/ibmverify-go/generated"
 	"github.com/ChrisVerde02/ibmverify-go/generated/apiclients"
@@ -96,11 +97,20 @@ func (c *Client) rawDo(ctx context.Context, method, path string, body any) ([]by
 }
 
 // List returns all API clients as a raw JSON map slice.
+// The API returns a paginated envelope { "apiClients": [...], ... } — we unwrap it.
 func (c *Client) List(ctx context.Context, _ *generated.GetAPIClientsRequest) ([]map[string]interface{}, error) {
 	body, err := c.rawDo(ctx, http.MethodGet, "/v1.0/apiclients", nil)
 	if err != nil {
 		return nil, fmt.Errorf("apiclients: list: %w", err)
 	}
+	// Try paginated envelope first
+	var envelope struct {
+		APIClients []map[string]interface{} `json:"apiClients"`
+	}
+	if err := json.Unmarshal(body, &envelope); err == nil && envelope.APIClients != nil {
+		return envelope.APIClients, nil
+	}
+	// Fallback: bare array
 	var list []map[string]interface{}
 	if err := json.Unmarshal(body, &list); err != nil {
 		return nil, fmt.Errorf("apiclients: list: unmarshal: %w", err)
@@ -122,16 +132,57 @@ func (c *Client) Get(ctx context.Context, clientID string) (map[string]interface
 }
 
 // Create registers a new API client and returns it as a raw JSON map.
+// IBM Verify returns HTTP 201 with an empty body and a Location header
+// pointing to the new resource — so we extract the ID from that header
+// and do a follow-up GET to return the full record.
 func (c *Client) Create(ctx context.Context, req *generated.APIClientConfigRequest) (map[string]interface{}, error) {
-	body, err := c.rawDo(ctx, http.MethodPost, "/v1.0/apiclients", req)
+	token, err := c.getToken(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("apiclients: get token: %w", err)
+	}
+
+	bodyBytes, marshalErr := json.Marshal(req)
+	if marshalErr != nil {
+		return nil, fmt.Errorf("apiclients: create: marshal: %w", marshalErr)
+	}
+
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost,
+		c.tenantURL+"/v1.0/apiclients", bytes.NewReader(bodyBytes))
+	if err != nil {
+		return nil, fmt.Errorf("apiclients: create: request: %w", err)
+	}
+	httpReq.Header.Set("Authorization", "Bearer "+token)
+	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("Accept", "application/json")
+
+	resp, err := c.httpClient.Do(httpReq)
 	if err != nil {
 		return nil, fmt.Errorf("apiclients: create: %w", err)
 	}
-	var m map[string]interface{}
-	if err := json.Unmarshal(body, &m); err != nil {
-		return nil, fmt.Errorf("apiclients: create: unmarshal: %w", err)
+	defer resp.Body.Close()
+	respBody, _ := io.ReadAll(io.LimitReader(resp.Body, 10*1024*1024))
+	if resp.StatusCode >= 400 {
+		return nil, fmt.Errorf("apiclients: create: HTTP %d: %s", resp.StatusCode, string(respBody))
 	}
-	return m, nil
+
+	// If body is non-empty JSON, return it directly
+	if len(bytes.TrimSpace(respBody)) > 0 {
+		var m map[string]interface{}
+		if err := json.Unmarshal(respBody, &m); err == nil {
+			return m, nil
+		}
+	}
+
+	// Empty body — extract client ID from Location: /v1.0/apiclients/<id>
+	loc := resp.Header.Get("Location")
+	if loc == "" {
+		return nil, fmt.Errorf("apiclients: create: no Location header in 201 response")
+	}
+	// Last path segment is the client ID
+	parts := strings.Split(strings.TrimRight(loc, "/"), "/")
+	clientID := parts[len(parts)-1]
+
+	return c.Get(ctx, clientID)
 }
 
 // Delete removes an API client by client ID.

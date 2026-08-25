@@ -10,6 +10,7 @@ package users
 
 import (
 	"context"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -119,17 +120,47 @@ func (c *Client) Get(ctx context.Context, id string) (map[string]interface{}, er
 	return m, nil
 }
 
-// Create creates a new user using the generated typed client.
-func (c *Client) Create(ctx context.Context, req *generated.CreateUserRequest) (*generated.UserResponseV2, error) {
-	cl, err := c.newGenerated(ctx)
+// Create creates a new user via raw HTTP to avoid typed-unmarshal failures
+// caused by IBM's spec mismatch (e.g. pwdChangedTime returned as string, not int64).
+// Returns the full SCIM response as a raw map.
+func (c *Client) Create(ctx context.Context, req *generated.CreateUserRequest) (map[string]interface{}, error) {
+	token, err := c.getToken(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("users: get token: %w", err)
 	}
-	result, err := cl.CreateUser(ctx, req)
+
+	bodyBytes, err := json.Marshal(req.Body)
+	if err != nil {
+		return nil, fmt.Errorf("users: create: marshal: %w", err)
+	}
+
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost,
+		c.tenantURL+"/v2.0/Users", bytes.NewReader(bodyBytes))
+	if err != nil {
+		return nil, fmt.Errorf("users: create: request: %w", err)
+	}
+	httpReq.Header.Set("Authorization", "Bearer "+token)
+	httpReq.Header.Set("Content-Type", "application/scim+json")
+	httpReq.Header.Set("Accept", "application/scim+json")
+
+	resp, err := c.httpClient.Do(httpReq)
 	if err != nil {
 		return nil, fmt.Errorf("users: create: %w", err)
 	}
-	return result, nil
+	defer resp.Body.Close()
+	respBody, err := io.ReadAll(io.LimitReader(resp.Body, 10*1024*1024))
+	if err != nil {
+		return nil, fmt.Errorf("users: create: read response: %w", err)
+	}
+	if resp.StatusCode >= 400 {
+		return nil, fmt.Errorf("users: create: HTTP %d: %s", resp.StatusCode, string(respBody))
+	}
+
+	var m map[string]interface{}
+	if err := json.Unmarshal(respBody, &m); err != nil {
+		return nil, fmt.Errorf("users: create: unmarshal: %w", err)
+	}
+	return m, nil
 }
 
 // Delete removes a user by ID.
