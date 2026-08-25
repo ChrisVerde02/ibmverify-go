@@ -229,6 +229,178 @@ func TestCreate_sendsJSONBody(t *testing.T) {
 	}
 }
 
+func TestCreate_fullResponseFields(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/v1.0/apiclients", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"clientId":     "cid-full",
+			"clientName":   "Full Client",
+			"clientSecret": "full-s3cr3t",
+			"enabled":      true,
+			"entitlements": []string{"manageOAuthClients", "manageCerts"},
+			"description":  "test client",
+			"ipFilterOp":   "WHITELIST",
+			"ipFilters":    []string{"10.0.0.0/8"},
+			"jwkUri":       "https://example.com/.well-known/jwks.json",
+		})
+	})
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+
+	cl := newClient(t, srv.URL)
+	result, err := cl.Create(context.Background(), &generated.APIClientConfigRequest{
+		ClientName:   "Full Client",
+		Entitlements: []string{"manageOAuthClients", "manageCerts"},
+		Enabled:      true,
+	})
+	if err != nil {
+		t.Fatalf("Create full: %v", err)
+	}
+
+	checks := map[string]any{
+		"clientId":    "cid-full",
+		"clientName":  "Full Client",
+		"clientSecret": "full-s3cr3t",
+		"description": "test client",
+		"ipFilterOp":  "WHITELIST",
+		"jwkUri":      "https://example.com/.well-known/jwks.json",
+	}
+	for k, want := range checks {
+		if result[k] != want {
+			t.Errorf("field %q: want %v, got %v", k, want, result[k])
+		}
+	}
+
+	// entitlements comes back as []interface{} after JSON round-trip
+	ents, ok := result["entitlements"].([]interface{})
+	if !ok {
+		t.Fatalf("entitlements: expected []interface{}, got %T", result["entitlements"])
+	}
+	if len(ents) != 2 {
+		t.Errorf("entitlements: want 2, got %d", len(ents))
+	}
+	if ents[0] != "manageOAuthClients" {
+		t.Errorf("entitlements[0]: want manageOAuthClients, got %v", ents[0])
+	}
+
+	// ipFilters same
+	filters, ok := result["ipFilters"].([]interface{})
+	if !ok {
+		t.Fatalf("ipFilters: expected []interface{}, got %T", result["ipFilters"])
+	}
+	if len(filters) != 1 || filters[0] != "10.0.0.0/8" {
+		t.Errorf("ipFilters: want [10.0.0.0/8], got %v", filters)
+	}
+}
+
+func TestGet_fullResponseFields(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/v1.0/apiclients/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"clientId":     "cid-full",
+			"clientName":   "Full Client",
+			"enabled":      false,
+			"entitlements": []string{"manageOAuthClients"},
+			"description":  "read back",
+			"ipFilterOp":   "BLACKLIST",
+			"ipFilters":    []string{"192.168.0.0/16", "172.16.0.0/12"},
+			"jwkUri":       "https://keys.example.com/jwks",
+		})
+	})
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+
+	cl := newClient(t, srv.URL)
+	m, err := cl.Get(context.Background(), "cid-full")
+	if err != nil {
+		t.Fatalf("Get full: %v", err)
+	}
+
+	if m["enabled"] != false {
+		t.Errorf("enabled: want false, got %v", m["enabled"])
+	}
+	if m["description"] != "read back" {
+		t.Errorf("description: want 'read back', got %v", m["description"])
+	}
+	if m["ipFilterOp"] != "BLACKLIST" {
+		t.Errorf("ipFilterOp: want BLACKLIST, got %v", m["ipFilterOp"])
+	}
+	if m["jwkUri"] != "https://keys.example.com/jwks" {
+		t.Errorf("jwkUri: got %v", m["jwkUri"])
+	}
+
+	filters, ok := m["ipFilters"].([]interface{})
+	if !ok {
+		t.Fatalf("ipFilters: expected []interface{}, got %T", m["ipFilters"])
+	}
+	if len(filters) != 2 {
+		t.Errorf("ipFilters: want 2 entries, got %d", len(filters))
+	}
+
+	// clientSecret must NOT be present on Get (IBM never returns it after creation)
+	if _, present := m["clientSecret"]; present {
+		t.Error("clientSecret must not be present in Get response")
+	}
+}
+
+func TestList_fullResponseFields(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/v1.0/apiclients", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode([]any{
+			map[string]any{
+				"clientId":     "cid-a",
+				"clientName":   "Client A",
+				"enabled":      true,
+				"entitlements": []string{"manageOAuthClients"},
+				"description":  "first",
+			},
+			map[string]any{
+				"clientId":     "cid-b",
+				"clientName":   "Client B",
+				"enabled":      false,
+				"entitlements": []string{"manageCerts"},
+				"description":  "second",
+			},
+		})
+	})
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+
+	cl := newClient(t, srv.URL)
+	list, err := cl.List(context.Background(), nil)
+	if err != nil {
+		t.Fatalf("List full: %v", err)
+	}
+	if len(list) != 2 {
+		t.Fatalf("want 2, got %d", len(list))
+	}
+	if list[0]["description"] != "first" {
+		t.Errorf("list[0] description: got %v", list[0]["description"])
+	}
+	if list[1]["description"] != "second" {
+		t.Errorf("list[1] description: got %v", list[1]["description"])
+	}
+
+	// clientSecret must NOT be present in list items
+	for i, item := range list {
+		if _, present := item["clientSecret"]; present {
+			t.Errorf("list[%d]: clientSecret must not be present in List response", i)
+		}
+	}
+
+	ents, ok := list[0]["entitlements"].([]interface{})
+	if !ok {
+		t.Fatalf("list[0] entitlements: expected []interface{}, got %T", list[0]["entitlements"])
+	}
+	if ents[0] != "manageOAuthClients" {
+		t.Errorf("list[0] entitlements[0]: got %v", ents[0])
+	}
+}
+
 // ---------------------------------------------------------------------------
 // Delete
 // ---------------------------------------------------------------------------
