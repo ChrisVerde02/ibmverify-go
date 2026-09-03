@@ -316,7 +316,7 @@ go vet ./...
 
 ## Versioning
 
-Follows [semantic versioning](https://semver.org). Current version: **v1.6.4**
+Follows [semantic versioning](https://semver.org). Current version: **v1.6.5**
 
 | Change | Version bump |
 |---|---|
